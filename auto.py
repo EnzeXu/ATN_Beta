@@ -61,7 +61,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     h_dim_FC = parameters.get("h_dim_FC")  # 26  # for fully_connected layers
     h_dim_RNN = parameters.get("h_dim_RNN")  # 26
     x_dim = np.shape(data_x)[2]
-    y_dim = np.shape(data_y)[2]
+    y_dim = 1  # np.shape(data_y)[2]
     num_layer_encoder = parameters.get("num_layer_encoder")  # 2
     num_layer_selector = parameters.get("num_layer_selector")  # 3
     num_layer_predictor = parameters.get("num_layer_predictor")  # 2
