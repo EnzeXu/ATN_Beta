@@ -46,33 +46,6 @@ def purity_score(y_true, y_pred):
     return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
 
 
-def get_data_y(data_y):
-    for i in range(len(data_y)):
-        for k in range(14):
-            scores = []
-            notnan = []
-            for j in range(2):
-                scores.append(data_y[i][j][k])
-            for l in range(2):
-                if not math.isnan(scores[l]):
-                    notnan.append(l)
-            for p in range(2):
-                if math.isnan(scores[p]):
-                    mindiff = 10
-                    minindex = 0
-                    for h in notnan:
-                        if abs(h - p) < mindiff:
-                            mindiff = abs(h - p)
-                            minindex = h
-                    data_y[i][p][k] = data_y[i][minindex][k]
-    for i in range(len(data_y)):
-        for j in range(2):
-            for k in range(14):
-                if math.isnan(data_y[i][j][k]):
-                    data_y[i][j][k] = 0.5
-    return np.asarray(data_y)
-
-
 def string_to_stamp(string, string_format="%Y%m%d"):
   string = str(string)
   return time.mktime(time.strptime(string, string_format))
@@ -157,8 +130,8 @@ def fill_nan(clinic_list):
 def get_heat_map_data(main_path, K, label):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path)
-    dim_0 = len(list(pt_dic.keys()))
-    dim_1 = len(pt_dic[list(pt_dic.keys())[0]])
+    dim_0 = len(label) # len(list(pt_dic.keys()))
+    dim_1 = len(label[0]) # len(pt_dic[list(pt_dic.keys())[0]])
     label_match = np.asarray(label).reshape(dim_0 * dim_1)
     patient_data_match = []
     for i in range(dim_0):
@@ -273,9 +246,9 @@ def build_kmeans_result(main_path, kmeans_labels, data_name):
 
 def get_start_index(main_path, data_name):
     df = pd.read_csv(main_path + "record/{}/record.csv".format(data_name))
-    print(list(df["Id"]))
+    # print(list(df["Id"]))
     start_index = list(df["Id"])[-1] + 1
-    print(start_index)
+    # print(start_index)
     start_index = max(start_index, 1)
     return start_index
 
@@ -340,12 +313,19 @@ def initial_record(main_path, data_x, data_name, seed_count=10):
             for one_label in clinical_judge_labels:
                 dic[one_label] += tmp_params.get(one_label)
         for one_label in clinical_judge_labels:
-            dic[one_label] = round(dic[one_label] / seed_count, 2)
+            dic[one_label] = round(dic[one_label] / seed_count, 2) if seed_count > 0 else 0
         with open("data/initial/{}/base_dic.pkl".format(data_name), "wb") as f:
             pickle.dump(dic, f)
-        np.save("data/initial/{}/base_res.npy".format(data_name), res_all[0], allow_pickle=True)
+        # print(len(res_all[0]), len(res_all[0][0]))
         save_record(main_path, 0, "None", -1, dic, "kmeans_base_average", data_name)
-        return dic, res_all[0]
+        if seed_count > 0:
+            np.save("data/initial/{}/base_res.npy".format(data_name), res_all[0], allow_pickle=True)
+            return dic, res_all[0]
+        else:
+            empty = [[[0] * 14] for i in range(5)]
+            np.save("data/initial/{}/base_res.npy".format(data_name), empty, allow_pickle=True)
+            return dic, empty
+
     else:
         with open("data/initial/{}/base_dic.pkl".format(data_name), "rb") as f:
             dic = pickle.load(f)
@@ -406,8 +386,9 @@ def get_kmeans_base(data_x, seed=0):
             data.append(data_x[i][j])
     kmeans = KMeans(n_clusters=5, random_state=seed).fit(data)
     kmeans_output = []
+    dim = len(data_x[0])
     for i in range(len(data_x)):
-        tmp = kmeans.labels_[i * 2: i * 2 + 2]
+        tmp = kmeans.labels_[i * dim: i * dim + dim]
         kmeans_output.append(tmp)
     kmeans_output = np.asarray(kmeans_output)
     return kmeans_output
@@ -474,6 +455,14 @@ def build_data_x_beta(main_path, period=500, every=10):
     np.save(main_path + "data/data_x/data_x_beta4.npy", data_x_beta4, allow_pickle=True)
 
 
+def build_data_y_beta(main_path):
+    data_y = np.load(main_path + "data/data_y_new.npy", allow_pickle=True)
+    print(np.shape(data_y))
+    data_y = np.asarray([[item[-1]] for item in data_y])
+    print(np.shape(data_y))
+    np.save(main_path + "data/data_y/data_y_beta.npy", data_y, allow_pickle=True)
+
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
@@ -481,11 +470,11 @@ if __name__ == "__main__":
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
     # build_data_x_alpha(main_path)
     # # build_patient_dictionary(main_path)
-    # data_x = load_data(main_path, "/data/data_x_new.npy")
-    # initial_record(main_path, data_x, 2)
+    data_x = load_data(main_path, "/data/data_x/data_x_beta1.npy")
+    initial_record(main_path, data_x, "beta1", 0)
     # for item in CLINICAL_LABELS:
     #     print("{}_var,".format(item), end="")
-    build_data_x_beta(main_path)
+    # build_data_y_beta(main_path)
 
     # build_cn_ad_labels(main_path)
     # data_x = load_data(main_path, "/data/data_x_new.npy")

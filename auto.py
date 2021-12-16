@@ -43,7 +43,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     if print_flag:
         print("[{:0>4d}][Step 1] Loading data".format(data_name))
     # data_x = load_data(main_path, "/data/data_x_new.npy")
-    data_y = load_data(main_path, "/data/data_y/data_y.npy")
+    data_y = load_data(main_path, "/data/data_y/data_y_beta.npy")
     seed = 1234
     tr_data_x, te_data_x, tr_data_y, te_data_y = train_test_split(
         data_x, data_y, test_size=0.2, random_state=seed
@@ -327,7 +327,7 @@ def start(params, opt):
         comments = platform.platform()
 
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
-    base_dic, base_res = initial_record(main_path, data_x, opt.data, 5)
+    base_dic, base_res = initial_record(main_path, data_x, opt.data, int(opt.kmeans))
     start_index = get_start_index(main_path, opt.data)
 
     for i in range(times):
@@ -372,6 +372,7 @@ if __name__ == "__main__":
     parser.add_argument("--num", default=500, help="number of training")
     parser.add_argument("--comment", default="", help="any comment")
     parser.add_argument("--data", default="alpha1", help="dataset of data_x (alpha1, alpha2, alpha3 or alpha4)")
+    parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
     opt = parser.parse_args()
     start(params, opt)
 
