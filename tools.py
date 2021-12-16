@@ -266,7 +266,7 @@ def build_kmeans_result(main_path, kmeans_labels, data_name):
     kmeans_labels = np.asarray(kmeans_labels)
     res1 = get_heat_map_data(main_path, 5, kmeans_labels)
     judge, judge_params, distribution_string = judge_good_train(kmeans_labels, res1, False)
-    print(judge, judge_params, distribution_string)
+    # print(judge, judge_params, distribution_string)
     save_record(main_path, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
     return judge_params, res1
 
@@ -332,7 +332,8 @@ def initial_record(main_path, data_x, data_name, seed_count=10):
         res_all = []
         for one_label in clinical_judge_labels:
             dic[one_label] = 0
-        for seed in range(seed_count):
+        print("Building kmeans bases... Please wait...")
+        for seed in tqdm(range(seed_count)):
             kmeans_labels = get_kmeans_base(data_x, seed)
             tmp_params, res = build_kmeans_result(main_path, kmeans_labels, data_name)
             res_all.append(res)
@@ -412,7 +413,7 @@ def get_kmeans_base(data_x, seed=0):
     return kmeans_output
 
 
-def build_data_x(main_path):
+def build_data_x_alpha(main_path):
     data_network = scio.loadmat(main_path + "data/network_centrality.mat")
     betweenness = np.asarray([item[0] for item in data_network["betweenness"]])
     closeness = np.asarray([item[0] for item in data_network["closeness"]])
@@ -441,6 +442,36 @@ def build_data_x(main_path):
     np.save(main_path + "data/data_x/data_x_alpha4.npy", data_x_alpha4, allow_pickle=True)
 
 
+def build_data_x_beta(main_path, period=500, every=10):
+    data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
+    print(np.shape(data_x))
+    data_x = np.asarray([item[0: period: every] for item in data_x])
+    print(np.shape(data_x))
+    data_network = scio.loadmat(main_path + "data/network_centrality.mat")
+    betweenness = np.asarray([item[0] for item in data_network["betweenness"]])
+    closeness = np.asarray([item[0] for item in data_network["closeness"]])
+    degree = np.asarray([item[0] for item in data_network["degree"]])
+    laplacian = np.asarray([item[0] for item in data_network["laplacian"]])
+    pagerank = np.asarray([item[0] for item in data_network["pagerank"]])
+    data_x_beta1 = data_x
+    data_x_beta2 = []
+    data_x_beta3 = []
+    data_x_beta4 = []
+    for i in range(len(data_x)):
+        data_x_beta2.append([np.concatenate((data_x[i][j], laplacian), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta3.append([np.concatenate((data_x[i][j], degree), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta4.append([np.concatenate((data_x[i][j], betweenness, closeness, degree, pagerank, laplacian), axis=0) for j in range(len(data_x[0]))])
+    data_x_beta2 = np.asarray(data_x_beta2)
+    data_x_beta3 = np.asarray(data_x_beta3)
+    data_x_beta4 = np.asarray(data_x_beta4)
+    print(data_x_beta1.shape)
+    print(data_x_beta2.shape)
+    print(data_x_beta3.shape)
+    print(data_x_beta4.shape)
+    np.save(main_path + "data/data_x/data_x_beta1.npy", data_x_beta1, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_beta2.npy", data_x_beta2, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_beta3.npy", data_x_beta3, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_beta4.npy", data_x_beta4, allow_pickle=True)
 
 
 if __name__ == "__main__":
@@ -448,13 +479,13 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    # build_data_x(main_path)
+    # build_data_x_alpha(main_path)
     # # build_patient_dictionary(main_path)
     # data_x = load_data(main_path, "/data/data_x_new.npy")
     # initial_record(main_path, data_x, 2)
     # for item in CLINICAL_LABELS:
     #     print("{}_var,".format(item), end="")
-    get_start_index(main_path)
+    build_data_x_beta(main_path)
 
     # build_cn_ad_labels(main_path)
     # data_x = load_data(main_path, "/data/data_x_new.npy")

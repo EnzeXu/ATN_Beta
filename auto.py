@@ -66,7 +66,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     num_layer_selector = parameters.get("num_layer_selector")  # 3
     num_layer_predictor = parameters.get("num_layer_predictor")  # 2
     z_dim = h_dim_RNN * num_layer_encoder
-    max_length = 1 # np.shape(data_x)[1]
+    max_length = np.shape(data_x)[1]
     rnn_type = 'LSTM'  # GRU, LSTM
     input_dims = {
         'x_dim': x_dim,
