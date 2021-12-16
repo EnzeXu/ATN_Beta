@@ -70,7 +70,7 @@ class AC_TPC:
 
             # Input and Output
             self.x          = tf.placeholder(tf.float32, [None, self.max_length, self.x_dim], name='inputs')
-            self.y          = tf.placeholder(tf.float32, [None, self.max_length, self.y_dim], name='labels_onehot')
+            self.y          = tf.placeholder(tf.float32, [None, 1, self.y_dim], name='labels_onehot')  #### self.y          = tf.placeholder(tf.float32, [None, self.max_length, self.y_dim], name='labels_onehot')
             
             # Embedding
             self.E          = tf.placeholder(tf.float32, [self.K, self.z_dim], name='embeddings_input')
@@ -218,9 +218,9 @@ class AC_TPC:
                 y_bars   = predictor(z_bars, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn)
 
             self.z_bars    = tf.reshape(z_bars, [-1, self.max_length, self.z_dim])
-            self.y_bars    = tf.reshape(y_bars, [-1, self.max_length, self.y_dim])
-            self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])
-            self.s_sample  = tf.reshape(s_sample, [-1, self.max_length])
+            self.y_bars    = tf.reshape(y_bars, [-1, 1, self.y_dim])  # self.y_bars    = tf.reshape(y_bars, [-1, self.max_length, self.y_dim])
+            self.pi_sample = tf.reshape(pi_sample, [-1, 1])  # self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])
+            self.s_sample  = tf.reshape(s_sample, [-1, 1])  # self.s_sample  = tf.reshape(s_sample, [-1, self.max_length])
 
             
             ### DEFINE LOSS FUNCTIONS
