@@ -213,7 +213,7 @@ class AC_TPC:
 
 
             self.zs         = _transpose_batch_time(loop_state_ta[0].stack())
-            self.y_hats     = _transpose_batch_time(loop_state_ta[1].stack())
+            self.y_hats     = loop_state_ta[1] # _transpose_batch_time(loop_state_ta[1].stack())
             self.pis        = _transpose_batch_time(loop_state_ta[2].stack())
 
             ### SAMPLING PROCESS
