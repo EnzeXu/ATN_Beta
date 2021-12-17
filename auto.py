@@ -120,7 +120,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
         if (itr + 1) % check_step == 0:
             print("va_data_x", len(va_data_x), len(va_data_x[0]))
             # tmp_y, tmp_m = model.predict_y_hats(va_data_x)
-            tmp_y, tmp_m = model.predict_y_bars(va_data_x)
+            tmp_y, tmp_m = model.predict_y_hats(va_data_x)
             print("y_dim =", y_dim)
             print("tmp_y", len(tmp_y), len(tmp_y[0]))
             print("tmp_m", len(tmp_m), len(tmp_m[0]))

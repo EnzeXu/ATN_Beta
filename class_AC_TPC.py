@@ -140,7 +140,7 @@ class AC_TPC:
                                 net = x_
                             net = tf.contrib.layers.fully_connected(inputs=net, num_outputs=h_dim_, activation_fn=activation_fn, scope='predictor_'+str(tmp_layer))
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
-                        out = tf.contrib.layers.fully_connected(inputs=net, num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
+                        out = tf.contrib.layers.fully_connected(inputs=net.reshape((52, 50)), num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
                 return out
 
             
@@ -195,7 +195,7 @@ class AC_TPC:
             #define the loop_state TensorArray for information from rnn time steps
             loop_state_ta = (
                 tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #zs (j=1,...,J)
-                tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #y_hats (j=1,...,J)
+                tf.TensorArray(size=1, dtype=tf.float32, clear_after_read=False),#tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #y_hats (j=1,...,J)
                 tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False)   #pis (j=1,...,J)
             )  
 
