@@ -195,7 +195,7 @@ class AC_TPC:
             #define the loop_state TensorArray for information from rnn time steps
             loop_state_ta = (
                 tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #zs (j=1,...,J)
-                tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #y_hats (j=1,...,J)
+                tf.TensorArray(size=1, dtype=tf.float32, clear_after_read=False), #tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #y_hats (j=1,...,J)
                 tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False)   #pis (j=1,...,J)
             )  
 
