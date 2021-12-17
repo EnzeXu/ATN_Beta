@@ -49,11 +49,13 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
         data_x, data_y, test_size=0.2, random_state=seed
     )
     print("tr_data_y", len(tr_data_y), len(tr_data_y[0]))
+    print("tr_data_x", len(tr_data_x), len(tr_data_x[0]))
     tr_data_x, va_data_x, tr_data_y, va_data_y = train_test_split(
         tr_data_x, tr_data_y, test_size=0.2, random_state=seed
     )
     print("va_data_y", len(va_data_y), len(va_data_y[0]))
-    time.sleep(10)
+    print("va_data_x", len(va_data_x), len(va_data_x[0]))
+    time.sleep(20)
     y_type = 'continuous'
 
 
