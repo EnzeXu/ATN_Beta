@@ -73,7 +73,6 @@ class AC_TPC:
             #self.y          = tf.placeholder(tf.float32, [None, 1, self.y_dim], name='labels_onehot')  #### self.y          = tf.placeholder(tf.float32, [None, self.max_length, self.y_dim], name='labels_onehot')
             self.y = tf.placeholder(tf.float32, [None, self.max_length, self.y_dim], name='labels_onehot')
 
-
             # Embedding
             self.E          = tf.placeholder(tf.float32, [self.K, self.z_dim], name='embeddings_input')
             self.EE         = tf.Variable(self.E, name='embeddings_var')
@@ -133,8 +132,6 @@ class AC_TPC:
                 else:
                     raise Exception('Wrong output type. The value {}!!'.format(o_type_))
 
-                tf.print(o_dim_)
-                print(o_dim_)
                 with tf.variable_scope('predictor', reuse=reuse):
                     if num_layers_ == 1:
                         out =  tf.contrib.layers.fully_connected(inputs=x_, num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
@@ -144,18 +141,13 @@ class AC_TPC:
                                 net = x_
                             net = tf.contrib.layers.fully_connected(inputs=net, num_outputs=h_dim_, activation_fn=activation_fn, scope='predictor_'+str(tmp_layer))
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
-                        # tf.print(tf.shape(net))
-                        # print(tf.shape(net))
                         out = tf.contrib.layers.fully_connected(inputs=net, num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
-                # tf.print(tf.shape(out))
-                # print(tf.shape(out))
                 return out
 
             
             ### DEFINE LOOP FUNCTION FOR ENCODRER (f-g, f-h relations are created here)
             def loop_fn(time, cell_output, cell_state, loop_state):
-                with open("test.txt", "a") as f:
-                    f.write("time: {}\n".format(time))
+
                 emit_output = cell_output 
 
                 if cell_output is None:  # time == 0
@@ -166,14 +158,10 @@ class AC_TPC:
                     tmp_z  = utils.create_concat_state_h(next_cell_state, self.num_layers_f, self.rnn_type)      
                     tmp_y  = predictor(tmp_z, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn)        
                     tmp_pi = selector(tmp_z, self.K, self.num_layers_h, self.h_dim_h, self.fc_activate_fn)
-                    if time == 1:
-                        next_loop_state = (loop_state[0].write(time-1, tmp_z),  # save all the hidden states
-                                           loop_state[1].write(time-1, tmp_y),  # save all the output
-                                           loop_state[2].write(time-1, tmp_pi)) # save all the selector_net output (i.e., pi)
-                    else:
-                        next_loop_state = (loop_state[0].write(time - 1, tmp_z),  # save all the hidden states
-                                           loop_state[1].write(time - 1, tmp_y),  # save all the output
-                                           loop_state[2].write(time - 1, tmp_pi))  # save all the selector_net output (i.e., pi)
+
+                    next_loop_state = (loop_state[0].write(time-1, tmp_z),  # save all the hidden states
+                                       loop_state[1].write(time-1, tmp_y),  # save all the output
+                                       loop_state[2].write(time-1, tmp_pi)) # save all the selector_net output (i.e., pi)
 
                 elements_finished = (time >= self.max_length)
 
@@ -208,7 +196,7 @@ class AC_TPC:
             #define the loop_state TensorArray for information from rnn time steps
             loop_state_ta = (
                 tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #zs (j=1,...,J)
-                tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),#tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #y_hats (j=1,...,J)
+                tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  # tf.TensorArray(size=1, dtype=tf.float32, clear_after_read=False),#tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False),  #y_hats (j=1,...,J)
                 tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False)   #pis (j=1,...,J)
             )  
 
@@ -216,7 +204,7 @@ class AC_TPC:
 
 
             self.zs         = _transpose_batch_time(loop_state_ta[0].stack())
-            self.y_hats     = loop_state_ta[1] # _transpose_batch_time(loop_state_ta[1].stack())
+            self.y_hats     = _transpose_batch_time(loop_state_ta[1].stack())
             self.pis        = _transpose_batch_time(loop_state_ta[2].stack())
 
             ### SAMPLING PROCESS
@@ -231,9 +219,9 @@ class AC_TPC:
                 y_bars   = predictor(z_bars, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn)
 
             self.z_bars    = tf.reshape(z_bars, [-1, self.max_length, self.z_dim])
-            self.y_bars    = tf.reshape(y_bars, [-1, self.max_length, self.y_dim])  # self.y_bars    = tf.reshape(y_bars, [-1, 1, self.y_dim])  # self.y_bars    = tf.reshape(y_bars, [-1, self.max_length, self.y_dim])
-            self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])  # self.pi_sample = tf.reshape(pi_sample, [-1, 1])  # self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])
-            tf.reshape(s_sample, [-1, self.max_length])  # self.s_sample  = tf.reshape(s_sample, [-1, 1])  # self.s_sample  = tf.reshape(s_sample, [-1, self.max_length])
+            self.y_bars    = tf.reshape(y_bars, [-1, self.max_length, self.y_dim])  # self.y_bars    = tf.reshape(y_bars, [-1, self.max_length, self.y_dim])
+            self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])  # self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])
+            self.s_sample  = tf.reshape(s_sample, [-1, self.max_length])  # self.s_sample  = tf.reshape(s_sample, [-1, self.max_length])
 
             
             ### DEFINE LOSS FUNCTIONS
