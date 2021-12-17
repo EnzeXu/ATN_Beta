@@ -130,7 +130,9 @@ class AC_TPC:
                     out_fn = tf.nn.sigmoid
                 else:
                     raise Exception('Wrong output type. The value {}!!'.format(o_type_))
-                    
+
+                tf.print(tf.shape(o_dim_))
+                print(tf.shape(o_dim_))
                 with tf.variable_scope('predictor', reuse=reuse):
                     if num_layers_ == 1:
                         out =  tf.contrib.layers.fully_connected(inputs=x_, num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
@@ -141,6 +143,7 @@ class AC_TPC:
                             net = tf.contrib.layers.fully_connected(inputs=net, num_outputs=h_dim_, activation_fn=activation_fn, scope='predictor_'+str(tmp_layer))
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
                         tf.print(tf.shape(net))
+                        print(tf.shape(net))
                         out = tf.contrib.layers.fully_connected(inputs=tf.reshape(net, [52, 50, 444]), num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
                 return out
 
