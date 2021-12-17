@@ -55,7 +55,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     )
     print("va_data_y", len(va_data_y), len(va_data_y[0]))
     print("va_data_x", len(va_data_x), len(va_data_x[0]))
-    time.sleep(10)
+    time.sleep(1)
     y_type = 'continuous'
 
 
