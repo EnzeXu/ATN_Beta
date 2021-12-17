@@ -140,6 +140,7 @@ class AC_TPC:
                                 net = x_
                             net = tf.contrib.layers.fully_connected(inputs=net, num_outputs=h_dim_, activation_fn=activation_fn, scope='predictor_'+str(tmp_layer))
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
+                        tf.print(tf.shape(net))
                         out = tf.contrib.layers.fully_connected(inputs=tf.reshape(net, [52, 50, 444]), num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
                 return out
 
