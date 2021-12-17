@@ -131,8 +131,8 @@ class AC_TPC:
                 else:
                     raise Exception('Wrong output type. The value {}!!'.format(o_type_))
 
-                tf.print(tf.shape(o_dim_))
-                print(tf.shape(o_dim_))
+                tf.print(o_dim_)
+                print(o_dim_)
                 with tf.variable_scope('predictor', reuse=reuse):
                     if num_layers_ == 1:
                         out =  tf.contrib.layers.fully_connected(inputs=x_, num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
