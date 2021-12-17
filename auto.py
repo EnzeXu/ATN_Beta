@@ -55,7 +55,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     )
     print("va_data_y", len(va_data_y), len(va_data_y[0]))
     print("va_data_x", len(va_data_x), len(va_data_x[0]))
-    time.sleep(20)
+    time.sleep(10)
     y_type = 'continuous'
 
 
@@ -127,7 +127,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
             y_pred = tmp_y #.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             print("va_data_y", len(va_data_y), len(va_data_y[0]))
             print("tmp_m", len(tmp_m), len(tmp_m[0]))
-            time.sleep(60)
+            time.sleep(10)
             y_true = va_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             val_loss = np.sum((y_true - y_pred) ** 2, axis=-1)
             avg_val_loss = np.mean(val_loss)
