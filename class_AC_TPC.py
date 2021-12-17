@@ -28,6 +28,8 @@ def get_seq_length(sequence):
 
 class AC_TPC:
     def __init__(self, sess, name, input_dims, network_settings):
+        with open("test.txt", "a") as f:
+            f.write("time: %d\n")
         self.sess               = sess
         self.name               = name
         
