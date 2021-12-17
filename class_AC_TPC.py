@@ -147,7 +147,8 @@ class AC_TPC:
             
             ### DEFINE LOOP FUNCTION FOR ENCODRER (f-g, f-h relations are created here)
             def loop_fn(time, cell_output, cell_state, loop_state):
-
+                with open("test.txt", "a") as f:
+                    f.write("time: {}\n".format(time))
                 emit_output = cell_output 
 
                 if cell_output is None:  # time == 0
