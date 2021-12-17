@@ -149,7 +149,8 @@ class AC_TPC:
             def loop_fn(time, cell_output, cell_state, loop_state):
                 with open("test.txt", "a") as f:
                     f.write("time origin: {}\n".format(time))
-                    f.write("time int: {}\n".format(int(time)))
+                    f.write("time bool: {}\n".format(time >= self.max_length))
+                    f.write("self.max_length: {}\n\n".format(self.max_length))
                 emit_output = cell_output 
 
                 if cell_output is None:  # time == 0
