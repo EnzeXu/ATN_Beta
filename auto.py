@@ -32,7 +32,7 @@ import statistics
 from utils_log import save_logging, load_logging
 from data_loader import import_data
 from class_AC_TPC import AC_TPC, initialize_embedding
-
+import time
 from tools import *
 
 
@@ -117,6 +117,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
             y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             print("va_data_y", va_data_y, len(va_data_y), len(va_data_y[0]))
             print("tmp_m", tmp_m, len(tmp_m), len(tmp_m[0]))
+            time.sleep(20)
             y_true = va_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             val_loss = np.sum((y_true - y_pred) ** 2, axis=-1)
             avg_val_loss = np.mean(val_loss)
