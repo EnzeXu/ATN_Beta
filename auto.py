@@ -114,8 +114,9 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
         avg_loss += tmp_loss / check_step
         if (itr + 1) % check_step == 0:
             tmp_y, tmp_m = model.predict_y_hats(va_data_x)
-            print("tmp_y", tmp_y, len(tmp_y), len(tmp_y[0]))
-            print("tmp_m", tmp_m, len(tmp_m), len(tmp_m[0]))
+            print("y_dim =", y_dim)
+            print("tmp_y", len(tmp_y), len(tmp_y[0]))
+            print("tmp_m", len(tmp_m), len(tmp_m[0]))
             y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             print("va_data_y", len(va_data_y), len(va_data_y[0]))
             print("tmp_m", len(tmp_m), len(tmp_m[0]))
