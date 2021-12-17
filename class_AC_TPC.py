@@ -142,11 +142,11 @@ class AC_TPC:
                                 net = x_
                             net = tf.contrib.layers.fully_connected(inputs=net, num_outputs=h_dim_, activation_fn=activation_fn, scope='predictor_'+str(tmp_layer))
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
-                        tf.print(tf.shape(net))
-                        print(tf.shape(net))
+                        # tf.print(tf.shape(net))
+                        # print(tf.shape(net))
                         out = tf.contrib.layers.fully_connected(inputs=net, num_outputs=o_dim_, activation_fn=out_fn, scope='predictor_out')
-                tf.print(tf.shape(out))
-                print(tf.shape(out))
+                # tf.print(tf.shape(out))
+                # print(tf.shape(out))
                 return out
 
             
@@ -163,10 +163,14 @@ class AC_TPC:
                     tmp_z  = utils.create_concat_state_h(next_cell_state, self.num_layers_f, self.rnn_type)      
                     tmp_y  = predictor(tmp_z, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn)        
                     tmp_pi = selector(tmp_z, self.K, self.num_layers_h, self.h_dim_h, self.fc_activate_fn)
-
-                    next_loop_state = (loop_state[0].write(time-1, tmp_z),  # save all the hidden states
-                                       loop_state[1].write(time-1, tmp_y),  # save all the output
-                                       loop_state[2].write(time-1, tmp_pi)) # save all the selector_net output (i.e., pi)
+                    if time == 1:
+                        next_loop_state = (loop_state[0].write(time-1, tmp_z),  # save all the hidden states
+                                           loop_state[1].write(time-1, tmp_y),  # save all the output
+                                           loop_state[2].write(time-1, tmp_pi)) # save all the selector_net output (i.e., pi)
+                    else:
+                        next_loop_state = (loop_state[0].write(time - 1, tmp_z),  # save all the hidden states
+                                           loop_state[1],  # save all the output
+                                           loop_state[2].write(time - 1, tmp_pi))  # save all the selector_net output (i.e., pi)
 
                 elements_finished = (time >= self.max_length)
 
