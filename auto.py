@@ -124,7 +124,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
             print("y_dim =", y_dim)
             print("tmp_y", len(tmp_y), len(tmp_y[0]))
             print("tmp_m", len(tmp_m), len(tmp_m[0]))
-            y_pred = tmp_y #.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
+            y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             print("va_data_y", len(va_data_y), len(va_data_y[0]))
             print("tmp_m", len(tmp_m), len(tmp_m[0]))
             time.sleep(10)
