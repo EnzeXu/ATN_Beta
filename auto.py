@@ -115,15 +115,15 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
         _, tmp_loss = model.train_mle(x_mb, y_mb, lr_rate, keep_prob)
         avg_loss += tmp_loss / check_step
         if (itr + 1) % check_step == 0:
-            print("va_data_x", len(va_data_x), len(va_data_x[0]))
+            # print("va_data_x", len(va_data_x), len(va_data_x[0]))
             # tmp_y, tmp_m = model.predict_y_hats(va_data_x)
             tmp_y, tmp_m = model.predict_y_hats(va_data_x)
-            print("y_dim =", y_dim)
-            print("tmp_y", len(tmp_y), len(tmp_y[0]))
-            print("tmp_m", len(tmp_m), len(tmp_m[0]))
+            # print("y_dim =", y_dim)
+            # print("tmp_y", len(tmp_y), len(tmp_y[0]))
+            # print("tmp_m", len(tmp_m), len(tmp_m[0]))
             y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
-            print("va_data_y", len(va_data_y), len(va_data_y[0]))
-            print("tmp_m", len(tmp_m), len(tmp_m[0]))
+            # print("va_data_y", len(va_data_y), len(va_data_y[0]))
+            # print("tmp_m", len(tmp_m), len(tmp_m[0]))
             # time.sleep(3)
             y_true = va_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
             val_loss = np.sum((y_true - y_pred) ** 2, axis=-1)
