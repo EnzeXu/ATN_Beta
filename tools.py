@@ -211,7 +211,7 @@ def fill_nan(clinic_list):
 
 
 def get_heat_map_data(main_path, K, label, data_type):
-    print("shape:", np.asarray(label).shape)
+    print("get_heat_map_data shape:", np.asarray(label).shape)
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
     dim_0 = len(label) # len(list(pt_dic.keys()))
@@ -220,7 +220,7 @@ def get_heat_map_data(main_path, K, label, data_type):
     patient_data_match = []
     for i in range(dim_0):
         for j in range(dim_1):
-            print(i, j, pt_ids[i])
+            # print(i, j, pt_ids[i])
             patient_data_match.append([pt_ids[i], pt_dic[pt_ids[i]][j]])
     data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())  # main_path + 'DPS_ATN/MRI_information_All_Measurement.xlsx'
     target_labels = CLINICAL_LABELS #["MMSE", "CDRSB", "ADAS13"]
