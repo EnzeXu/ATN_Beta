@@ -727,7 +727,13 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    build_data_x_y_gamma(main_path)
+    # build_data_x_y_gamma(main_path)
+    path = "saves/gamma1/1/proposed/init/results/labels.npy"
+    data = np.load(path, allow_pickle=True)
+    print(data.shape)
+    print(data)
+    print(list(data))
+    print(data.shape)
     # print(split_periods([20190501, 20190504, 20190507, 20190513]))
     # create_empty_folders_all(main_path)
     # draw_stairs()
