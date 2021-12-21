@@ -37,9 +37,6 @@ from tools import *
 
 
 def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, print_flag=True):
-    # enze_patient_data = np.load(main_path + "data/enze_patient_data_new.npy", allow_pickle=True)
-    # enze_patient_data = np.asarray(enze_patient_data)
-    pt_dic = load_patient_dictionary(main_path)
     if print_flag:
         print("[{:0>4d}][Step 1] Loading data".format(data_name))
     # data_x = load_data(main_path, "/data/data_x_new.npy")
@@ -324,7 +321,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
         )
         f.write(string)
 
-    heat_map_data = get_heat_map_data(main_path, 5, patientProgressions)
+    heat_map_data = get_heat_map_data(main_path, 5, patientProgressions, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, data_name))
     # print(heat_map_data)
     judge, judge_params, distribution_string = judge_good_train(patientProgressions, heat_map_data, True, base_dic, base_res)

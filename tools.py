@@ -210,9 +210,9 @@ def fill_nan(clinic_list):
     return [item if not math.isnan(item) else mean for item in clinic_list]
 
 
-def get_heat_map_data(main_path, K, label):
+def get_heat_map_data(main_path, K, label, data_type):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
-    pt_dic = load_patient_dictionary(main_path)
+    pt_dic = load_patient_dictionary(main_path, data_type)
     dim_0 = len(label) # len(list(pt_dic.keys()))
     dim_1 = len(label[0]) # len(pt_dic[list(pt_dic.keys())[0]])
     label_match = np.asarray(label).reshape(dim_0 * dim_1)
@@ -320,7 +320,7 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
 
 def build_kmeans_result(main_path, kmeans_labels, data_name):
     kmeans_labels = np.asarray(kmeans_labels)
-    res1 = get_heat_map_data(main_path, 5, kmeans_labels)
+    res1 = get_heat_map_data(main_path, 5, kmeans_labels, data_name[:-1])
     judge, judge_params, distribution_string = judge_good_train(kmeans_labels, res1, False)
     # print(judge, judge_params, distribution_string)
     save_record(main_path, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
@@ -336,15 +336,15 @@ def get_start_index(main_path, data_name):
     return start_index
 
 
-def get_ac_tpc_result(main_path, index):
+def get_ac_tpc_result(main_path, index, data_type):
     labels = np.load(main_path + 'saves/{}/proposed/trained/results/labels.npy'.format(index))
-    res = get_heat_map_data(main_path, 5, labels)
+    res = get_heat_map_data(main_path, 5, labels, data_type)
     return res
 
 
-def build_cn_ad_labels(main_path):
+def build_cn_ad_labels(main_path, data_type):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
-    pt_dic = load_patient_dictionary(main_path)
+    pt_dic = load_patient_dictionary(main_path, data_type)
     clinical_score = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
     cn_ad_labels = []
     for i in range(320):  # [148*148，[label tuple]，VISCODE，patientID]
@@ -456,8 +456,8 @@ def build_patient_dictionary(main_path):
         pickle.dump(dic, f)
 
 
-def load_patient_dictionary(main_path):
-    with open(main_path + "data/patient_dictionary.pkl", "rb") as f:
+def load_patient_dictionary(main_path, data_type):
+    with open(main_path + "data/patient_dictionary_{}.pkl".format(data_type), "rb") as f:
         pt_dic = pickle.load(f)
     return pt_dic
 
@@ -633,6 +633,8 @@ def build_data_x_y_gamma(main_path, max_length=9):
                 dic_y[pt_id] = [[row.get(one_target) for one_target in target_labels]]
             else:
                 dic_y[pt_id].append([row.get(one_target) for one_target in target_labels])
+    with open(main_path + "data/patient_dictionary_gamma.pkl", "wb") as f:
+        pickle.dump(dic_date, f)
     tmp_max = -1
     empty_count = 0
     data_y = []
