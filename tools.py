@@ -211,6 +211,7 @@ def fill_nan(clinic_list):
 
 
 def get_heat_map_data(main_path, K, label, data_type):
+    print("shape:", np.asarray(label).shape)
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
     dim_0 = len(label) # len(list(pt_dic.keys()))
