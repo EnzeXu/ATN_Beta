@@ -220,6 +220,7 @@ def get_heat_map_data(main_path, K, label, data_type):
     patient_data_match = []
     for i in range(dim_0):
         for j in range(dim_1):
+            print(i, j, pt_ids[i])
             patient_data_match.append([pt_ids[i], pt_dic[pt_ids[i]][j]])
     data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())  # main_path + 'DPS_ATN/MRI_information_All_Measurement.xlsx'
     target_labels = CLINICAL_LABELS #["MMSE", "CDRSB", "ADAS13"]
