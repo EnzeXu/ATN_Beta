@@ -43,7 +43,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     if print_flag:
         print("[{:0>4d}][Step 1] Loading data".format(data_name))
     # data_x = load_data(main_path, "/data/data_x_new.npy")
-    data_y = load_data(main_path, "/data/data_y/data_y_alpha.npy")
+    data_y = load_data(main_path, "/data/data_y/data_y_{}.npy".format(opt.data[0:-1]))
     seed = 1234
     tr_data_x, te_data_x, tr_data_y, te_data_y = train_test_split(
         data_x, data_y, test_size=0.2, random_state=seed
@@ -334,6 +334,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
 def start(params, opt):
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"  # "E:/Workspace_WFU/ATN/Auto/"
     times = int(opt.num)
+    create_empty_folders(main_path, opt.data)
     if len(opt.comment) > 2:
         comments = platform.platform() + ": " + opt.comment
     else:

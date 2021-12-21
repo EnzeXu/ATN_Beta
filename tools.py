@@ -15,7 +15,7 @@ from tqdm import tqdm
 import pickle
 import sklearn
 from sklearn.cluster import KMeans
-from strings import CLINICAL_LABELS
+from strings import CLINICAL_LABELS, DATA_SETS
 import scipy.io as scio
 
 
@@ -110,6 +110,89 @@ def draw_heat_map_2(data1, data2, save_path, s=2):
     plt.tight_layout()
     plt.savefig(save_path, dpi=400)
     plt.show()
+
+
+def draw_stairs():
+    #m = np.random.rand(10, 12)
+    m = np.asarray([[3, 10, 10, 10],
+                    [2, 1, 10, 10],
+                    [5, 1, 3, 10],
+                    [2, 3, 3, 1]])
+    k1 = np.asarray([[np.nan, np.nan, np.nan, np.nan],
+                    [np.nan, np.nan, np.nan, np.nan],
+                    [1, 1, 1, np.nan],
+                    [np.nan, np.nan, 1, np.nan]])
+    k2 = np.asarray([[1, np.nan, np.nan, np.nan],
+                    [1, 1, np.nan, np.nan],
+                    [np.nan, 1, 1, np.nan],
+                    [1, 1, np.nan, 1]])
+    # 使用颜色主题
+    # plt.imshow(m, cmap=plt.cm.hot)
+    # plt.colorbar()
+    ylabels = [1, 2, 3, 4]
+    xlabels = [5, 4, 3, 2]
+    # plt.xticks(np.arange(len([xlabels])), xlabels, rotation=45)
+    plt.xticks(np.arange(0, 4, 1), xlabels)
+    plt.yticks(np.arange(0, 4, 1), ylabels)
+    # import matplotlib
+    # matplotlib.spines["top"].set_visible(False)
+    # plt.show()
+
+    fig = plt.figure(dpi=400, figsize=(7, 3))
+    ax = fig.add_subplot(121)
+    ax.set_title("k-means")
+    ax.set_xticks(np.arange(0, 4, 1))
+    ax.set_xticklabels(xlabels)
+    ax.set_yticks(np.arange(0, 4, 1))
+    ax.set_yticklabels(ylabels)
+    for seat in ["left", "right", "top", "bottom"]:
+        ax.spines[seat].set_visible(False)
+    for one_line in [
+        [-0.5, -0.5, 3.5],
+        [0.5, -0.5, 3.5],
+        [1.5, 0.5, 3.5],
+        [2.5, 1.5, 3.5],
+        [3.495, 2.5, 3.5]
+    ]:
+        ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+    for one_line in [
+        [-0.495, -0.5, 0.5],
+        [0.5, -0.5, 1.5],
+        [1.5, -0.5, 2.5],
+        [2.5, -0.5, 3.5],
+        [3.5, -0.5, 3.5]
+    ]:
+        ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+
+    ax.imshow(k1, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+
+    ax = fig.add_subplot(122)
+    ax.set_title("DPS-Net")
+    ax.set_xticks(np.arange(0, 4, 1))
+    ax.set_xticklabels(xlabels)
+    ax.set_yticks(np.arange(0, 4, 1))
+    ax.set_yticklabels(ylabels)
+    for seat in ["left", "right", "top", "bottom"]:
+        ax.spines[seat].set_visible(False)
+    for one_line in [
+        [-0.5, -0.5, 3.5],
+        [0.5, -0.5, 3.5],
+        [1.5, 0.5, 3.5],
+        [2.5, 1.5, 3.5],
+        [3.495, 2.5, 3.5]]:
+        ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+    for one_line in [
+        [-0.495, -0.5, 0.5],
+        [0.5, -0.5, 1.5],
+        [1.5, -0.5, 2.5],
+        [2.5, -0.5, 3.5],
+        [3.5, -0.5, 3.5]]:
+        ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+    ax.imshow(k2, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+    plt.tight_layout()
+    # plt.savefig(save_path, dpi=400)
+    plt.show()
+
 
 
 def get_engine():
@@ -247,7 +330,7 @@ def build_kmeans_result(main_path, kmeans_labels, data_name):
 def get_start_index(main_path, data_name):
     df = pd.read_csv(main_path + "record/{}/record.csv".format(data_name))
     # print(list(df["Id"]))
-    start_index = list(df["Id"])[-1] + 1
+    start_index = max([int(item) for item in list(df["Id"])]) + 1
     # print(start_index)
     start_index = max(start_index, 1)
     return start_index
@@ -396,11 +479,12 @@ def get_kmeans_base(data_x, seed=0):
 
 def build_data_x_alpha(main_path):
     data_network = scio.loadmat(main_path + "data/network_centrality.mat")
-    betweenness = np.asarray([item[0] for item in data_network["betweenness"]])
-    closeness = np.asarray([item[0] for item in data_network["closeness"]])
-    degree = np.asarray([item[0] for item in data_network["degree"]])
-    laplacian = np.asarray([item[0] for item in data_network["laplacian"]])
-    pagerank = np.asarray([item[0] for item in data_network["pagerank"]])
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
+
     data_x = np.load("data/data_x_new.npy", allow_pickle=True)
     data_x_alpha1 = data_x
     data_x_alpha2 = []
@@ -425,15 +509,14 @@ def build_data_x_alpha(main_path):
 
 def build_data_x_beta(main_path, period=500, every=10):
     data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
-    print(np.shape(data_x))
     data_x = np.asarray([item[0: period: every] for item in data_x])
-    print(np.shape(data_x))
+
     data_network = scio.loadmat(main_path + "data/network_centrality.mat")
-    betweenness = np.asarray([item[0] for item in data_network["betweenness"]])
-    closeness = np.asarray([item[0] for item in data_network["closeness"]])
-    degree = np.asarray([item[0] for item in data_network["degree"]])
-    laplacian = np.asarray([item[0] for item in data_network["laplacian"]])
-    pagerank = np.asarray([item[0] for item in data_network["pagerank"]])
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
     data_x_beta1 = data_x
     data_x_beta2 = []
     data_x_beta3 = []
@@ -463,15 +546,193 @@ def build_data_y_beta(main_path):
     np.save(main_path + "data/data_y/data_y_beta.npy", data_y, allow_pickle=True)
 
 
+def create_empty_folders_all(main_path):
+    locations = ["record/", "data/initial/", "saves/"]
+    for one_location in locations:
+        for one_dataset in DATA_SETS:
+            tmp_dir = main_path + one_location + one_dataset
+            if not os.path.exists(tmp_dir):
+                os.makedirs(tmp_dir)
+                print("Created folder {} successfully".format(tmp_dir))
+            else:
+                print("Folder {} exists".format(tmp_dir))
+
+
+def create_empty_folders(main_path, data_name):
+    locations = ["record/", "data/initial/", "saves/"]
+    for one_location in locations:
+        tmp_dir = main_path + one_location + data_name
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+            print("Created folder {} successfully".format(tmp_dir))
+        else:
+            print("Folder {} exists".format(tmp_dir))
+
+
+def count_pt_id_patient_lines(main_path):
+    df = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    dic = dict()
+    for one_key in pt_ids:
+        dic[one_key] = 0
+    # (clinical_score["PTID"] == one_pt_id) & (pd.notnull(clinical_score["EcogPtMem"]))
+    for index, row in df.iterrows():
+        if row.get("PTID") in pt_ids and pd.notnull(row.get("EcogPtMem")):
+            dic[row.get("PTID")] += 1
+    print(dic)
+    summary = dict()
+    for one_key in dic.keys():
+        if dic.get(one_key) not in summary:
+            summary[dic.get(one_key)] = 1
+        else:
+            summary[dic.get(one_key)] += 1
+    for one_key in sorted(list(summary.keys()), key=lambda x: x):
+        print("{}: {}".format(one_key, summary.get(one_key)))
+
+
+def minus_date(str1, str2):
+    return abs((string_to_stamp(str2) - string_to_stamp(str1)) / 86400)
+
+
+def split_periods(periods, start=0, end=499):
+    if len(periods) == 1:
+        return [0, 499]
+    periods = sorted(periods, key=lambda x: x)
+    periods = [str(item) for item in periods]
+    periods_proportion = [minus_date(periods[i], periods[i + 1]) for i in range(0, len(periods) - 1)]
+    outputs = [0]
+    tmp = 0
+    periods_sum = sum(periods_proportion)
+    for item in periods_proportion:
+        tmp += (end - start) * item / periods_sum
+        outputs.append(round(tmp))
+    return outputs
+
+
+def build_data_x_y_gamma(main_path, max_length=9):
+    df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
+    target_labels = CLINICAL_LABELS
+    df = df[["PTID", "EXAMDATE"] + target_labels]
+    df = df[pd.notnull(df["EcogPtMem"])]
+    # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
+    # df["PTID"] = [str(item) for item in df["PTID"]]
+    for one_label in target_labels:
+        df[one_label] = fill_nan(df[one_label])
+    pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
+    dic_date = dict()
+
+    dic_y = dict()
+    for index, row in df.iterrows():
+        pt_id = row.get("PTID")
+        if pt_id in pt_ids:
+            if pt_id not in dic_date:
+                dic_date[pt_id] = [row.get("EXAMDATE")]
+            else:
+                dic_date[pt_id].append(row.get("EXAMDATE"))
+            if pt_id not in dic_y:
+                dic_y[pt_id] = [[row.get(one_target) for one_target in target_labels]]
+            else:
+                dic_y[pt_id].append([row.get(one_target) for one_target in target_labels])
+    tmp_max = -1
+    empty_count = 0
+    data_y = []
+    for pt_id in pt_ids:
+        tmp_max = max(tmp_max, len(dic_y.get(pt_id)))
+        tmp_y = dic_y.get(pt_id)
+        empty_count += (max_length - len(tmp_y))
+        if len(tmp_y) == 1:
+            tmp_y.append(tmp_y[0])
+        if len(tmp_y) < max_length:
+            tmp_y += [[0] * len(target_labels) for i in range(max_length - len(tmp_y))]
+        data_y.append(tmp_y)
+    data_y = np.asarray(data_y)
+    data_y = np.reshape(data_y, (len(pt_ids), max_length, len(target_labels)))
+    print("tmp_max:", tmp_max)
+    print("empty_count: {} / ({} * {}) = {}".format(empty_count, len(pt_ids), max_length, empty_count / (len(pt_ids) * max_length)))
+    np.save(main_path + "data/data_y/data_y_gamma.npy", data_y, allow_pickle=True)
+
+    data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
+    data_x = np.asarray([item[0: 500] for item in data_x])
+    data_network = scio.loadmat(main_path + "data/network_centrality.mat")
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
+    data_x_beta1 = data_x
+    data_x_beta2 = []
+    data_x_beta3 = []
+    data_x_beta4 = []
+    for i in range(len(data_x)):
+        data_x_beta2.append([np.concatenate((data_x[i][j], laplacian), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta3.append([np.concatenate((data_x[i][j], degree), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta4.append([np.concatenate((data_x[i][j], betweenness, closeness, degree, pagerank, laplacian), axis=0) for j in range(len(data_x[0]))])
+    data_x_beta2 = np.asarray(data_x_beta2)
+    data_x_beta3 = np.asarray(data_x_beta3)
+    data_x_beta4 = np.asarray(data_x_beta4)
+
+    dic_x_index = dict()
+    data_x_gamma1 = []
+    data_x_gamma2 = []
+    data_x_gamma3 = []
+    data_x_gamma4 = []
+    for i, pt_id in enumerate(pt_ids):
+        dic_x_index[pt_id] = split_periods(dic_date[pt_id])
+        # print(dic_x_index[pt_id])
+        # gamma1
+        data_x_gamma1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
+        if len(data_x_gamma1_tmp) < max_length:
+            data_x_gamma1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_gamma1_tmp))]
+        data_x_gamma1.append(data_x_gamma1_tmp)
+
+        # gamma2
+        data_x_gamma2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
+        if len(data_x_gamma2_tmp) < max_length:
+            data_x_gamma2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_gamma2_tmp))]
+        data_x_gamma2.append(data_x_gamma2_tmp)
+
+        # gamma3
+        data_x_gamma3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
+        if len(data_x_gamma3_tmp) < max_length:
+            data_x_gamma3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_gamma3_tmp))]
+        data_x_gamma3.append(data_x_gamma3_tmp)
+
+        # gamma4
+        data_x_gamma4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
+        if len(data_x_gamma4_tmp) < max_length:
+            data_x_gamma4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_gamma4_tmp))]
+        data_x_gamma4.append(data_x_gamma4_tmp)
+
+    data_x_gamma1 = np.asarray(data_x_gamma1)
+    data_x_gamma2 = np.asarray(data_x_gamma2)
+    data_x_gamma3 = np.asarray(data_x_gamma3)
+    data_x_gamma4 = np.asarray(data_x_gamma4)
+
+    print(data_x_gamma1.shape)
+    print(data_x_gamma2.shape)
+    print(data_x_gamma3.shape)
+    print(data_x_gamma4.shape)
+    np.save(main_path + "data/data_x/data_x_gamma1.npy", data_x_gamma1, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma2.npy", data_x_gamma2, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma3.npy", data_x_gamma3, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma4.npy", data_x_gamma4, allow_pickle=True)
+
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
+    build_data_x_y_gamma(main_path)
+    # print(split_periods([20190501, 20190504, 20190507, 20190513]))
+    # create_empty_folders_all(main_path)
+    # draw_stairs()
+    # count_pt_id_patient_lines(main_path)
     # build_data_x_alpha(main_path)
+    # build_data_x_beta(main_path)
     # # build_patient_dictionary(main_path)
-    data_x = load_data(main_path, "/data/data_x/data_x_beta1.npy")
-    initial_record(main_path, data_x, "beta1", 0)
+    # data_x = load_data(main_path, "/data/data_x/data_x_beta1.npy")
+    # initial_record(main_path, data_x, "beta1", 0)
     # for item in CLINICAL_LABELS:
     #     print("{}_var,".format(item), end="")
     # build_data_y_beta(main_path)
