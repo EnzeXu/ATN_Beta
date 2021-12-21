@@ -320,7 +320,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
             parameters.get("check_step_s7")
         )
         f.write(string)
-
+    print(patientProgressions)
     heat_map_data = get_heat_map_data(main_path, 5, patientProgressions, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, data_name))
     # print(heat_map_data)
