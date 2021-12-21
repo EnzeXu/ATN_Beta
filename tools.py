@@ -728,7 +728,7 @@ if __name__ == "__main__":
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
     # build_data_x_y_gamma(main_path)
-    path = "saves/gamma1/1/proposed/init/results/labels.npy"
+    path = "saves/gamma1/1/proposed/trained/results/labels.npy"
     data = np.load(path, allow_pickle=True)
     print(data.shape)
     print(data)
