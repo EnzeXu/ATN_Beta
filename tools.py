@@ -259,7 +259,7 @@ def get_heat_map_data(main_path, K, label, data_type):
     return result
 
 
-def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None, K=5, base_res=None):
+def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None, base_res=None, K=5):
     cn_ad_labels = np.load("data/cn_ad_labels_{}.npy".format(data_type), allow_pickle=True)
     dic = dict()
     for i in range(K):
@@ -481,7 +481,7 @@ def get_kmeans_base(data_x_raw, seed=0):
     kmeans_output = []
     tmp_index = 0
     for item in data_x_raw:
-        print(len(item))
+        # print(len(item))
         kmeans_output.append(kmeans.labels_[tmp_index: tmp_index + len(item)])
         tmp_index += len(item)
     # print("tmp_index:", tmp_index)
