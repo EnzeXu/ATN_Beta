@@ -211,43 +211,48 @@ def fill_nan(clinic_list):
 
 
 def get_heat_map_data(main_path, K, label, data_type):
-    print("get_heat_map_data shape:", np.asarray(label).shape)
+    # print("get_heat_map_data shape:", np.asarray(label).shape)
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
-    dim_0 = len(label) # len(list(pt_dic.keys()))
-    dim_1 = len(label[0]) # len(pt_dic[list(pt_dic.keys())[0]])
-    label_match = np.asarray(label).reshape(dim_0 * dim_1)
+    dim_0 = len(pt_ids) # len(list(pt_dic.keys()))
+    # dim_1 = len(label[0]) # len(pt_dic[list(pt_dic.keys())[0]])
+    # label_match = np.asarray(label).reshape(dim_0 * dim_1)
     patient_data_match = []
-    for i in range(dim_0):
-        for j in range(dim_1):
-            # print(i, j, pt_ids[i])
-            patient_data_match.append([pt_ids[i], pt_dic[pt_ids[i]][j]])
+
     data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())  # main_path + 'DPS_ATN/MRI_information_All_Measurement.xlsx'
     target_labels = CLINICAL_LABELS #["MMSE", "CDRSB", "ADAS13"]
     data = data[["PTID", "EXAMDATE"] + target_labels]
-    data["EXAMDATE"] = [str(item) for item in data["EXAMDATE"]]
-    data["PTID"] = [str(item) for item in data["PTID"]]
+    data = data[pd.notnull(data["EcogPtMem"])]
+
     for one_label in target_labels:
         data[one_label] = fill_nan(data[one_label])
-    # data["EXAMDATE"] = data["EXAMDATE"].astype(str)
+
     result = []
     for i in range(K):
         dic = dict()
         for one_target_label in target_labels:
             dic[one_target_label] = []
-        for j in range(dim_0 * dim_1):
-            if label_match[j] != i:
-                continue
-            for one_target_label in target_labels:
-                # tmp = data.loc[(data["PTID"] == patient_data_match[j][0]) & (data["EXAMDATE"] == str(patient_data_match[j][1]))][one_target_label].values[0]
-                tmp = data.loc[(data["PTID"] == patient_data_match[j][0]) & (data["EXAMDATE"] == str(patient_data_match[j][1]))][one_target_label].values[0]
-                # print(tmp1, end="")
-                if math.isnan(tmp):
-                    print("bad in matching PTID = '{}'".format(patient_data_match[j][0]), " EXAMDATE = '{}'".format(patient_data_match[j][1]))
-                    return 1
-                tmp_list = dic.get(one_target_label)
-                tmp_list.append(float(tmp))
-                dic[one_target_label] = tmp_list
+        for j, one_pt_id in enumerate(pt_ids):
+            for k, one_exam_date in enumerate(pt_dic.get(pt_ids)):
+                if label[j][k] == i:
+                    for one_target_label in target_labels:
+                        tmp = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]
+                        dic[one_target_label] += [float(tmp)]
+        result.append([np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels])
+
+        # for j in range(dim_0 * dim_1):
+        #     if label_match[j] != i:
+        #         continue
+        #     for one_target_label in target_labels:
+        #         # tmp = data.loc[(data["PTID"] == patient_data_match[j][0]) & (data["EXAMDATE"] == str(patient_data_match[j][1]))][one_target_label].values[0]
+        #         tmp = data.loc[(data["PTID"] == patient_data_match[j][0]) & (data["EXAMDATE"] == str(patient_data_match[j][1]))][one_target_label].values[0]
+        #         # print(tmp1, end="")
+        #         if math.isnan(tmp):
+        #             print("bad in matching PTID = '{}'".format(patient_data_match[j][0]), " EXAMDATE = '{}'".format(patient_data_match[j][1]))
+        #             return None
+        #         tmp_list = dic.get(one_target_label)
+        #         tmp_list.append(float(tmp))
+        #         dic[one_target_label] = tmp_list
         result.append([np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels])
     return result
 
@@ -321,7 +326,7 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
 
 
 def build_kmeans_result(main_path, kmeans_labels, data_name):
-    kmeans_labels = np.asarray(kmeans_labels)
+    # kmeans_labels = np.asarray(kmeans_labels)
     res1 = get_heat_map_data(main_path, 5, kmeans_labels, data_name[:-1])
     judge, judge_params, distribution_string = judge_good_train(kmeans_labels, res1, False)
     # print(judge, judge_params, distribution_string)
@@ -382,7 +387,7 @@ def create_label_string(cluster_labels, const_cn_ad_labels):
     return ["{}+{}".format(dic.get("CN"), dic.get("AD")) for dic in dic_list]
 
 
-def initial_record(main_path, data_x, data_name, seed_count=10):
+def initial_record(main_path, data_x, data_x_raw, data_name, seed_count=10):
     if not os.path.exists(main_path + "record/{}/record.csv".format(data_name)):
         copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record.csv".format(data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS]
@@ -392,7 +397,7 @@ def initial_record(main_path, data_x, data_name, seed_count=10):
             dic[one_label] = 0
         print("Building kmeans bases... Please wait...")
         for seed in tqdm(range(seed_count)):
-            kmeans_labels = get_kmeans_base(data_x, seed)
+            kmeans_labels = get_kmeans_base(data_x_raw, seed)
             tmp_params, res = build_kmeans_result(main_path, kmeans_labels, data_name)
             res_all.append(res)
             for one_label in clinical_judge_labels:
@@ -464,18 +469,23 @@ def load_patient_dictionary(main_path, data_type):
     return pt_dic
 
 
-def get_kmeans_base(data_x, seed=0):
+def get_kmeans_base(data_x_raw, seed=0):
     data = []
-    for i in range(len(data_x)):
-        for j in range(len(data_x[0])):
-            data.append(data_x[i][j])
+    for item in data_x_raw:
+        for vec in item:
+            data.append(vec)
     kmeans = KMeans(n_clusters=5, random_state=seed).fit(data)
     kmeans_output = []
-    dim = len(data_x[0])
-    for i in range(len(data_x)):
-        tmp = kmeans.labels_[i * dim: i * dim + dim]
-        kmeans_output.append(tmp)
-    kmeans_output = np.asarray(kmeans_output)
+    tmp_index = 0
+    for item in data_x_raw:
+        kmeans_output.append(kmeans.labels_[tmp_index: tmp_index + len(item)])
+        tmp_index += len(item)
+    print("tmp_index:", tmp_index)
+    # dim = len(data_x[0])
+    # for i in range(len(data_x)):
+    #     tmp = kmeans.labels_[i * dim: i * dim + dim]
+    #     kmeans_output.append(tmp)
+    # kmeans_output = np.asarray(kmeans_output)
     return kmeans_output
 
 
@@ -598,7 +608,7 @@ def minus_date(str1, str2):
 
 def split_periods(periods, start=0, end=499):
     if len(periods) == 1:
-        return [0, 499]
+        return [end]
     periods = sorted(periods, key=lambda x: x)
     periods = [str(item) for item in periods]
     periods_proportion = [minus_date(periods[i], periods[i + 1]) for i in range(0, len(periods) - 1)]
@@ -680,29 +690,37 @@ def build_data_x_y_gamma(main_path, max_length=9):
     data_x_gamma2 = []
     data_x_gamma3 = []
     data_x_gamma4 = []
+    data_x_gamma1_raw = []
+    data_x_gamma2_raw = []
+    data_x_gamma3_raw = []
+    data_x_gamma4_raw = []
     for i, pt_id in enumerate(pt_ids):
         dic_x_index[pt_id] = split_periods(dic_date[pt_id])
         # print(dic_x_index[pt_id])
         # gamma1
         data_x_gamma1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
+        data_x_gamma1_raw.append(data_x_gamma1_tmp)
         if len(data_x_gamma1_tmp) < max_length:
             data_x_gamma1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_gamma1_tmp))]
         data_x_gamma1.append(data_x_gamma1_tmp)
 
         # gamma2
         data_x_gamma2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
+        data_x_gamma2_raw.append(data_x_gamma2_tmp)
         if len(data_x_gamma2_tmp) < max_length:
             data_x_gamma2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_gamma2_tmp))]
         data_x_gamma2.append(data_x_gamma2_tmp)
 
         # gamma3
         data_x_gamma3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
+        data_x_gamma3_raw.append(data_x_gamma3_tmp)
         if len(data_x_gamma3_tmp) < max_length:
             data_x_gamma3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_gamma3_tmp))]
         data_x_gamma3.append(data_x_gamma3_tmp)
 
         # gamma4
         data_x_gamma4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
+        data_x_gamma4_raw.append(data_x_gamma4_tmp)
         if len(data_x_gamma4_tmp) < max_length:
             data_x_gamma4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_gamma4_tmp))]
         data_x_gamma4.append(data_x_gamma4_tmp)
@@ -720,6 +738,10 @@ def build_data_x_y_gamma(main_path, max_length=9):
     np.save(main_path + "data/data_x/data_x_gamma2.npy", data_x_gamma2, allow_pickle=True)
     np.save(main_path + "data/data_x/data_x_gamma3.npy", data_x_gamma3, allow_pickle=True)
     np.save(main_path + "data/data_x/data_x_gamma4.npy", data_x_gamma4, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma1_raw.npy", data_x_gamma1_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma2_raw.npy", data_x_gamma2_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma3_raw.npy", data_x_gamma3_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_gamma4_raw.npy", data_x_gamma4_raw, allow_pickle=True)
 
 
 if __name__ == "__main__":
@@ -727,13 +749,13 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    # build_data_x_y_gamma(main_path)
-    path = "saves/gamma1/1/proposed/trained/results/labels.npy"
-    data = np.load(path, allow_pickle=True)
-    print(data.shape)
-    print(data)
-    print(list(data))
-    print(data.shape)
+    build_data_x_y_gamma(main_path)
+    # path = "saves/gamma1/1/proposed/trained/results/labels.npy"
+    # data = np.load(path, allow_pickle=True)
+    # print(data.shape)
+    # print(data)
+    # print(list(data))
+    # print(data.shape)
     # print(split_periods([20190501, 20190504, 20190507, 20190513]))
     # create_empty_folders_all(main_path)
     # draw_stairs()

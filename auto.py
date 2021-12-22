@@ -262,9 +262,16 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     # plt.show()
     # plt.savefig(save_path + 'results/figure_clustering_hist.png')
     # plt.close()
-    patientProgressions = np.array_split(pred_y, 320)
+    # patientProgressions = np.array_split(pred_y, 320)
+    pt_dic = load_patient_dictionary(main_path, opt.data[:-1])
+    pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
+    output_labels = []
+    tmp_index = 0
+    for pt_id in pt_ids:
+        output_labels.append(pred_y[tmp_index: tmp_index + len(pt_dic.get(pt_id))])
+        tmp_index += len(pt_dic.get(pt_id))
     # print(patientProgressions)
-    np.save(save_path + "results/labels.npy", patientProgressions)
+    np.save(save_path + "results/labels.npy", output_labels, allow_pickle=True)
     with open(save_path + "results/parameters.txt", "w") as f:
         string = "# [Step 2] Define network parameters\n" \
                  "'K': {},\n" \
@@ -320,8 +327,8 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
             parameters.get("check_step_s7")
         )
         f.write(string)
-    print(patientProgressions)
-    heat_map_data = get_heat_map_data(main_path, 5, patientProgressions, opt.data[:-1])
+    print(output_labels)
+    heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, data_name))
     # print(heat_map_data)
     judge, judge_params, distribution_string = judge_good_train(patientProgressions, heat_map_data, True, base_dic, base_res)
@@ -338,7 +345,8 @@ def start(params, opt):
         comments = platform.platform()
 
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
-    base_dic, base_res = initial_record(main_path, data_x, opt.data, int(opt.kmeans))
+    data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
+    base_dic, base_res = initial_record(main_path, data_x, data_x_raw, opt.data, int(opt.kmeans))
     start_index = get_start_index(main_path, opt.data)
 
     for i in range(times):
