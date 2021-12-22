@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import random
 from sklearn.metrics import roc_auc_score, average_precision_score
@@ -257,15 +259,15 @@ def get_heat_map_data(main_path, K, label, data_type):
     return result
 
 
-def judge_good_train(labels, heat_map_data, flag=True, base_dic=None, base_res=None):
-    cn_ad_labels = np.load("data/cn_ad_labels.npy", allow_pickle=True)
+def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None, K=5, base_res=None):
+    cn_ad_labels = np.load("data/cn_ad_labels_{}.npy".format(data_type), allow_pickle=True)
     dic = dict()
-    for i in range(5):
+    for i in range(K):
         dic[i] = 0
     for row in labels:
         for item in row:
             dic[item if (type(item) == int or type(item) == np.int32) else item[0]] += 1
-    distribution = np.asarray([dic.get(i) for i in range(5)])
+    distribution = np.asarray([dic.get(i) for i in range(K)])
     label_strings = create_label_string(labels, cn_ad_labels)
     distribution_string = "/".join(["{}({})".format(x, y) for x, y in zip(distribution, label_strings)])
     param_cluster_std = distribution.std()
@@ -328,7 +330,7 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
 def build_kmeans_result(main_path, kmeans_labels, data_name):
     # kmeans_labels = np.asarray(kmeans_labels)
     res1 = get_heat_map_data(main_path, 5, kmeans_labels, data_name[:-1])
-    judge, judge_params, distribution_string = judge_good_train(kmeans_labels, res1, False)
+    judge, judge_params, distribution_string = judge_good_train(kmeans_labels, data_name[:-1], res1, False)
     # print(judge, judge_params, distribution_string)
     save_record(main_path, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
     return judge_params, res1
@@ -354,13 +356,14 @@ def build_cn_ad_labels(main_path, data_type):
     pt_dic = load_patient_dictionary(main_path, data_type)
     clinical_score = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
     cn_ad_labels = []
-    for i in range(320):  # [148*148，[label tuple]，VISCODE，patientID]
-        first_scan_label = list(clinical_score[(clinical_score["PTID"] == pt_ids[i]) & (clinical_score["EXAMDATE"] == pt_dic[pt_ids[i]][0])]["DX"])[0]
-        # print(len(list(clinical_score[(clinical_score["PTID"] == pt_ids[i]) & (clinical_score["EXAMDATE"] == pt_dic[pt_ids[i]][0])]["DX"])), len(list(clinical_score[(clinical_score["PTID"] == pt_ids[i]) & (clinical_score["EXAMDATE"] == pt_dic[pt_ids[i]][1])]["DX"])))
-        last_scan_label = list(clinical_score[(clinical_score["PTID"] == pt_ids[i]) & (clinical_score["EXAMDATE"] == pt_dic[pt_ids[i]][1])]["DX"])[0]
-        cn_ad_labels.append([name_label(first_scan_label), name_label(last_scan_label)])
+    for pt_id in pt_ids:  # [148*148，[label tuple]，VISCODE，patientID]
+        tmp_labels = []
+        for one_exam_date in pt_dic.get(pt_id):
+            one_label = list(clinical_score[(clinical_score["PTID"] == pt_id) & (clinical_score["EXAMDATE"] == one_exam_date)]["DX"])[0]
+            tmp_labels.append(name_label(one_label))
+        cn_ad_labels.append(tmp_labels)
     # print(cn_ad_labels)
-    np.save("data/cn_ad_labels.npy", cn_ad_labels, allow_pickle=True)
+    np.save("data/cn_ad_labels_{}.npy".format(data_type), cn_ad_labels, allow_pickle=True)
     # return np.asarray(cn_ad_labels)
 
 
@@ -374,7 +377,7 @@ def create_label_string(cluster_labels, const_cn_ad_labels):
         dic_list.append(dic)
 
     for i in range(len(cluster_labels)):
-        for j in range(len(cluster_labels[0])):
+        for j in range(len(cluster_labels[i])):
             tmp_cluster_id = cluster_labels[i][j] if (type(cluster_labels[i][j]) == int or type(cluster_labels[i][j]) == np.int32) else int(cluster_labels[i][j][0])
             if const_cn_ad_labels[i][j] == "AD":
                 dic_list[tmp_cluster_id]["AD"] += 1
@@ -700,28 +703,28 @@ def build_data_x_y_gamma(main_path, max_length=9):
         # print(dic_x_index[pt_id])
         # gamma1
         data_x_gamma1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
-        data_x_gamma1_raw.append(data_x_gamma1_tmp)
+        data_x_gamma1_raw.append([list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]])
         if len(data_x_gamma1_tmp) < max_length:
             data_x_gamma1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_gamma1_tmp))]
         data_x_gamma1.append(data_x_gamma1_tmp)
 
         # gamma2
         data_x_gamma2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
-        data_x_gamma2_raw.append(data_x_gamma2_tmp)
+        data_x_gamma2_raw.append([list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]])
         if len(data_x_gamma2_tmp) < max_length:
             data_x_gamma2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_gamma2_tmp))]
         data_x_gamma2.append(data_x_gamma2_tmp)
 
         # gamma3
         data_x_gamma3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
-        data_x_gamma3_raw.append(data_x_gamma3_tmp)
+        data_x_gamma3_raw.append([list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]])
         if len(data_x_gamma3_tmp) < max_length:
             data_x_gamma3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_gamma3_tmp))]
         data_x_gamma3.append(data_x_gamma3_tmp)
 
         # gamma4
         data_x_gamma4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
-        data_x_gamma4_raw.append(data_x_gamma4_tmp)
+        data_x_gamma4_raw.append([list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]])
         if len(data_x_gamma4_tmp) < max_length:
             data_x_gamma4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_gamma4_tmp))]
         data_x_gamma4.append(data_x_gamma4_tmp)
@@ -750,7 +753,7 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    build_data_x_y_gamma(main_path)
+    # build_data_x_y_gamma(main_path)
     # path = "saves/gamma1/1/proposed/trained/results/labels.npy"
     # data = np.load(path, allow_pickle=True)
     # print(data.shape)
@@ -769,8 +772,10 @@ if __name__ == "__main__":
     # for item in CLINICAL_LABELS:
     #     print("{}_var,".format(item), end="")
     # build_data_y_beta(main_path)
-
-    # build_cn_ad_labels(main_path)
+    # data = np.load("data/cn_ad_labels_gamma.npy", allow_pickle=True)
+    # print([len(item) for item in data])
+    # print(data)
+    # build_cn_ad_labels(main_path, "gamma")
     # data_x = load_data(main_path, "/data/data_x_new.npy")
     # base_res = np.load("data/initial/base_res.npy", allow_pickle=True)
     # #res = get_heat_map_data(main_path, 5, base_res)

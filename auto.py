@@ -331,7 +331,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, data_name))
     # print(heat_map_data)
-    judge, judge_params, distribution_string = judge_good_train(patientProgressions, heat_map_data, True, base_dic, base_res)
+    judge, judge_params, distribution_string = judge_good_train(output_labels, data_name[:-1], heat_map_data, True, base_dic, base_res)
     return judge, judge_params, distribution_string
 
 
