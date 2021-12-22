@@ -36,7 +36,7 @@ import time
 from tools import *
 
 
-def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, print_flag=True):
+def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, base_res_inter, print_flag=True):
     if print_flag:
         print("[{:0>4d}][Step 1] Loading data".format(times_count))
     # data_x = load_data(main_path, "/data/data_x_new.npy")
@@ -330,9 +330,11 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, p
         f.write(string)
     # print(output_labels)
     heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
+    _, heat_map_data_inter = get_heat_map_data_inter(main_path, 5, output_labels, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, times_count))
+    draw_stairs(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster".format(opt.data, times_count))
     # print(heat_map_data)
-    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, True, base_dic, base_res)
+    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic)
     return judge, judge_params, distribution_string
 
 
@@ -348,11 +350,11 @@ def start(params, opt):
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
     # print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
-    base_dic, base_res = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans))
+    base_dic, base_res, base_res_inter = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans))
     start_index = get_start_index(main_path, opt.data)
 
     for i in range(times):
-        j, p, ds = train(main_path, opt, data_x, start_index + i, params, base_dic, base_res)
+        j, p, ds = train(main_path, opt, data_x, start_index + i, params, base_dic, base_res, base_res_inter)
         save_record(main_path, start_index + i, ds, j, p, comments, opt.data, params)
         # get_start_index(main_path, opt.data)
 

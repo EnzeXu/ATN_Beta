@@ -19,6 +19,7 @@ import sklearn
 from sklearn.cluster import KMeans
 from strings import CLINICAL_LABELS, DATA_SETS
 import scipy.io as scio
+from scipy import stats
 
 
 def f_get_minibatch(mb_size, x, y):
@@ -114,87 +115,87 @@ def draw_heat_map_2(data1, data2, save_path, s=2):
     plt.show()
 
 
-def draw_stairs():
-    #m = np.random.rand(10, 12)
-    m = np.asarray([[3, 10, 10, 10],
-                    [2, 1, 10, 10],
-                    [5, 1, 3, 10],
-                    [2, 3, 3, 1]])
-    k1 = np.asarray([[np.nan, np.nan, np.nan, np.nan],
-                    [np.nan, np.nan, np.nan, np.nan],
-                    [1, 1, 1, np.nan],
-                    [np.nan, np.nan, 1, np.nan]])
-    k2 = np.asarray([[1, np.nan, np.nan, np.nan],
-                    [1, 1, np.nan, np.nan],
-                    [np.nan, 1, 1, np.nan],
-                    [1, 1, np.nan, 1]])
-    # 使用颜色主题
-    # plt.imshow(m, cmap=plt.cm.hot)
-    # plt.colorbar()
-    ylabels = [1, 2, 3, 4]
-    xlabels = [5, 4, 3, 2]
-    # plt.xticks(np.arange(len([xlabels])), xlabels, rotation=45)
-    plt.xticks(np.arange(0, 4, 1), xlabels)
-    plt.yticks(np.arange(0, 4, 1), ylabels)
-    # import matplotlib
-    # matplotlib.spines["top"].set_visible(False)
-    # plt.show()
+def draw_stairs(data1, data2, save_path, threshold=0.05):
+    for i, one_target in enumerate(CLINICAL_LABELS):
+        # k1 = np.asarray([[np.nan, np.nan, np.nan, np.nan],
+        #                 [np.nan, np.nan, np.nan, np.nan],
+        #                 [1, 1, 1, np.nan],
+        #                 [np.nan, np.nan, 1, np.nan]])
+        # k2 = np.asarray([[1, np.nan, np.nan, np.nan],
+        #                 [1, 1, np.nan, np.nan],
+        #                 [np.nan, 1, 1, np.nan],
+        #                 [1, 1, np.nan, 1]])
+        k1, k2 = np.asarray(data1[i]), np.asarray(data2[i])
+        for j in range(len(k1)):
+            for k in range(len(k1[j])):
+                if k1[j][k] >= threshold:
+                    k1[j][k] = 1
+                else:
+                    k1[j][k] = np.nan
+        for j in range(len(k2)):
+            for k in range(len(k2[j])):
+                if k2[j][k] >= threshold:
+                    k2[j][k] = 1
+                else:
+                    k2[j][k] = np.nan
+        ylabels = [2, 3, 4, 5]
+        xlabels = [1, 2, 3, 4]
+        plt.xticks(np.arange(0, 4, 1), xlabels)
+        plt.yticks(np.arange(0, 4, 1), ylabels)
+        fig = plt.figure(dpi=400, figsize=(7, 3))
+        ax = fig.add_subplot(121)
+        ax.set_title("k-means")
+        ax.set_xticks(np.arange(0, 4, 1))
+        ax.set_xticklabels(xlabels)
+        ax.set_yticks(np.arange(0, 4, 1))
+        ax.set_yticklabels(ylabels)
+        for seat in ["left", "right", "top", "bottom"]:
+            ax.spines[seat].set_visible(False)
+        for one_line in [
+            [-0.5, -0.5, 3.5],
+            [0.5, -0.5, 3.5],
+            [1.5, 0.5, 3.5],
+            [2.5, 1.5, 3.5],
+            [3.495, 2.5, 3.5]
+        ]:
+            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        for one_line in [
+            [-0.495, -0.5, 0.5],
+            [0.5, -0.5, 1.5],
+            [1.5, -0.5, 2.5],
+            [2.5, -0.5, 3.5],
+            [3.5, -0.5, 3.5]
+        ]:
+            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
 
-    fig = plt.figure(dpi=400, figsize=(7, 3))
-    ax = fig.add_subplot(121)
-    ax.set_title("k-means")
-    ax.set_xticks(np.arange(0, 4, 1))
-    ax.set_xticklabels(xlabels)
-    ax.set_yticks(np.arange(0, 4, 1))
-    ax.set_yticklabels(ylabels)
-    for seat in ["left", "right", "top", "bottom"]:
-        ax.spines[seat].set_visible(False)
-    for one_line in [
-        [-0.5, -0.5, 3.5],
-        [0.5, -0.5, 3.5],
-        [1.5, 0.5, 3.5],
-        [2.5, 1.5, 3.5],
-        [3.495, 2.5, 3.5]
-    ]:
-        ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-    for one_line in [
-        [-0.495, -0.5, 0.5],
-        [0.5, -0.5, 1.5],
-        [1.5, -0.5, 2.5],
-        [2.5, -0.5, 3.5],
-        [3.5, -0.5, 3.5]
-    ]:
-        ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-
-    ax.imshow(k1, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
-
-    ax = fig.add_subplot(122)
-    ax.set_title("DPS-Net")
-    ax.set_xticks(np.arange(0, 4, 1))
-    ax.set_xticklabels(xlabels)
-    ax.set_yticks(np.arange(0, 4, 1))
-    ax.set_yticklabels(ylabels)
-    for seat in ["left", "right", "top", "bottom"]:
-        ax.spines[seat].set_visible(False)
-    for one_line in [
-        [-0.5, -0.5, 3.5],
-        [0.5, -0.5, 3.5],
-        [1.5, 0.5, 3.5],
-        [2.5, 1.5, 3.5],
-        [3.495, 2.5, 3.5]]:
-        ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-    for one_line in [
-        [-0.495, -0.5, 0.5],
-        [0.5, -0.5, 1.5],
-        [1.5, -0.5, 2.5],
-        [2.5, -0.5, 3.5],
-        [3.5, -0.5, 3.5]]:
-        ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-    ax.imshow(k2, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
-    plt.tight_layout()
-    # plt.savefig(save_path, dpi=400)
-    plt.show()
-
+        ax.imshow(k1, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+        ax = fig.add_subplot(122)
+        ax.set_title("DPS-Net")
+        ax.set_xticks(np.arange(0, 4, 1))
+        ax.set_xticklabels(xlabels)
+        ax.set_yticks(np.arange(0, 4, 1))
+        ax.set_yticklabels(ylabels)
+        for seat in ["left", "right", "top", "bottom"]:
+            ax.spines[seat].set_visible(False)
+        for one_line in [
+            [-0.5, -0.5, 3.5],
+            [0.5, -0.5, 3.5],
+            [1.5, 0.5, 3.5],
+            [2.5, 1.5, 3.5],
+            [3.495, 2.5, 3.5]]:
+            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        for one_line in [
+            [-0.495, -0.5, 0.5],
+            [0.5, -0.5, 1.5],
+            [1.5, -0.5, 2.5],
+            [2.5, -0.5, 3.5],
+            [3.5, -0.5, 3.5]]:
+            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        ax.imshow(k2, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+        plt.suptitle("Inter-cluster difference [{}]".format(one_target))
+        plt.tight_layout()
+        plt.savefig("{}_{}.png".format(save_path, one_target), dpi=400)
+        #plt.show()
 
 
 def get_engine():
@@ -213,16 +214,11 @@ def fill_nan(clinic_list):
 
 
 def get_heat_map_data(main_path, K, label, data_type):
-    # print("get_heat_map_data shape:", np.asarray(label).shape)
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
-    dim_0 = len(pt_ids) # len(list(pt_dic.keys()))
-    # dim_1 = len(label[0]) # len(pt_dic[list(pt_dic.keys())[0]])
-    # label_match = np.asarray(label).reshape(dim_0 * dim_1)
-    patient_data_match = []
 
-    data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())  # main_path + 'DPS_ATN/MRI_information_All_Measurement.xlsx'
-    target_labels = CLINICAL_LABELS #["MMSE", "CDRSB", "ADAS13"]
+    data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    target_labels = CLINICAL_LABELS
     data = data[["PTID", "EXAMDATE"] + target_labels]
     data = data[pd.notnull(data["EcogPtMem"])]
 
@@ -230,6 +226,7 @@ def get_heat_map_data(main_path, K, label, data_type):
         data[one_label] = fill_nan(data[one_label])
 
     result = []
+
     for i in range(K):
         dic = dict()
         for one_target_label in target_labels:
@@ -242,24 +239,79 @@ def get_heat_map_data(main_path, K, label, data_type):
                         dic[one_target_label] += [float(tmp)]
         result.append([np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels])
 
-        # for j in range(dim_0 * dim_1):
-        #     if label_match[j] != i:
-        #         continue
-        #     for one_target_label in target_labels:
-        #         # tmp = data.loc[(data["PTID"] == patient_data_match[j][0]) & (data["EXAMDATE"] == str(patient_data_match[j][1]))][one_target_label].values[0]
-        #         tmp = data.loc[(data["PTID"] == patient_data_match[j][0]) & (data["EXAMDATE"] == str(patient_data_match[j][1]))][one_target_label].values[0]
-        #         # print(tmp1, end="")
-        #         if math.isnan(tmp):
-        #             print("bad in matching PTID = '{}'".format(patient_data_match[j][0]), " EXAMDATE = '{}'".format(patient_data_match[j][1]))
-        #             return None
-        #         tmp_list = dic.get(one_target_label)
-        #         tmp_list.append(float(tmp))
-        #         dic[one_target_label] = tmp_list
-        result.append([np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels])
     return result
 
 
-def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None, base_res=None, K=5):
+def get_heat_map_data_inter(main_path, K, label, data_type):
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    pt_dic = load_patient_dictionary(main_path, data_type)
+
+    data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    target_labels = CLINICAL_LABELS
+    data = data[["PTID", "EXAMDATE"] + target_labels]
+    data = data[pd.notnull(data["EcogPtMem"])]
+
+    for one_label in target_labels:
+        data[one_label] = fill_nan(data[one_label])
+    label_match = []
+    for j, one_pt_id in enumerate(pt_ids):
+        for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            label_match.append(label[j][k])
+    matrix = []
+    x_inter = []
+    dt = []
+    result = []
+
+    for j, one_pt_id in enumerate(pt_ids):
+        for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            tmp = []
+            for one_target_label in target_labels:
+                tmp.append(float(data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]))
+            x_inter.append(tmp)
+
+    bad_result = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (K - 1) ** 2)).reshape((len(CLINICAL_LABELS), K - 1, K - 1))
+
+    for j in range(K):
+        tmp = []
+        for i in range(len(label_match)):
+            if label_match[i] == j:
+                tmp.append(x_inter[i])
+        if len(tmp) == 0:
+            print("bad in drawing inter_cluster map")
+            return 1, bad_result
+        dt.append(tmp)
+
+    for i in range(1, K):
+        for j in range(0, K - 1):
+            # if j > i:
+            matrix.append(stats.ttest_ind(dt[i], dt[j])[1])
+
+    matrix = np.asarray(matrix).swapaxes(0, 1)
+    for item in matrix:
+        # tmp = item
+        # for index in [1, 2, 3, 6, 7, 11]:
+        #     tmp[index] = np.nan
+        tmp = np.asarray(item).reshape(4, 4)
+        for i in range(len(tmp)):
+            for j in range(i + 1, len(tmp)):
+                tmp[i][j] = np.nan
+        result.append(tmp)
+    result = np.asarray(result)
+    return 0, result
+
+
+def count_inter(data_inter, threshold=0.05):
+    dic = dict()
+    for i, one_target in enumerate(CLINICAL_LABELS):
+        dic[one_target + "_inter_count"] = 0
+        for j in range(len(data_inter[i])):
+            for k in range(len(data_inter[i][j])):
+                if data_inter[i][j][k] > threshold:
+                    dic[one_target + "_inter_count"] += 1
+    return dic
+
+
+def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag=True, base_dic=None, K=5):
     cn_ad_labels = np.load("data/cn_ad_labels_{}.npy".format(data_type), allow_pickle=True)
     dic = dict()
     for i in range(K):
@@ -272,12 +324,14 @@ def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None,
     distribution_string = "/".join(["{}({})".format(x, y) for x, y in zip(distribution, label_strings)])
     param_cluster_std = distribution.std()
     fourteen_sums = np.asarray(heat_map_data).sum(axis=0) # three_sums = np.asarray(heat_map_data).sum(axis=0)
-
+    count_inter_dic = count_inter(heat_map_data_inter)
     param_dic = dict()
     param_dic["Cluster_std"] = param_cluster_std
     for i, one_label in enumerate(CLINICAL_LABELS):
         param_dic[one_label + "_var"] = fourteen_sums[i]
+        param_dic[one_label + "_inter_count"] = count_inter_dic.get(one_label + "_inter_count")
     clinical_judge_labels = [item + "_var" for item in CLINICAL_LABELS]
+    clinical_judge_labels_inter = [item + "_inter_count" for item in CLINICAL_LABELS]
     if flag:
         judge = 0
         for one_label in clinical_judge_labels:
@@ -285,11 +339,14 @@ def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None,
                 judge = -1
                 break
         if judge != -1:
-            if param_dic.get("Cluster_std") < base_dic.get("Cluster_std"):
-                judge += 1
+            # if param_dic.get("Cluster_std") < base_dic.get("Cluster_std"):
+            #     judge += 1
 
             for one_label in clinical_judge_labels:
                 if param_dic.get(one_label) < base_dic.get(one_label):
+                    judge += 1
+            for one_label in clinical_judge_labels_inter:
+                if param_dic.get(one_label) > base_dic.get(one_label):
                     judge += 1
 
     else:
@@ -299,7 +356,7 @@ def judge_good_train(labels, data_type, heat_map_data, flag=True, base_dic=None,
 
 def save_record(main_path, index, distribution_string, judge, judge_params, comments, data_name, params=None):
     with open(main_path + "record/{}/record.csv".format(data_name), "a") as f:
-        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},".format(
+        f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},".format(
             index,
             judge,
             distribution_string,
@@ -318,6 +375,20 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
             judge_params.get("EcogSPOrgan_var"),
             judge_params.get("EcogSPDivatt_var"),
             judge_params.get("EcogSPTotal_var"),
+            judge_params.get("EcogPtMem_inter_count"),
+            judge_params.get("EcogPtLang_inter_count"),
+            judge_params.get("EcogPtVisspat_inter_count"),
+            judge_params.get("EcogPtPlan_inter_count"),
+            judge_params.get("EcogPtOrgan_inter_count"),
+            judge_params.get("EcogPtDivatt_inter_count"),
+            judge_params.get("EcogPtTotal_inter_count"),
+            judge_params.get("EcogSPMem_inter_count"),
+            judge_params.get("EcogSPLang_inter_count"),
+            judge_params.get("EcogSPVisspat_inter_count"),
+            judge_params.get("EcogSPPlan_inter_count"),
+            judge_params.get("EcogSPOrgan_inter_count"),
+            judge_params.get("EcogSPDivatt_inter_count"),
+            judge_params.get("EcogSPTotal_inter_count"),
             comments
         ))
         if not params:
@@ -329,11 +400,12 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
 
 def build_kmeans_result(main_path, kmeans_labels, data_name):
     # kmeans_labels = np.asarray(kmeans_labels)
-    res1 = get_heat_map_data(main_path, 5, kmeans_labels, data_name[:-1])
-    judge, judge_params, distribution_string = judge_good_train(kmeans_labels, data_name[:-1], res1, False)
+    res = get_heat_map_data(main_path, 5, kmeans_labels, data_name[:-1])
+    _, res_inter = get_heat_map_data_inter(main_path, 5, kmeans_labels, data_name[:-1])
+    judge, judge_params, distribution_string = judge_good_train(kmeans_labels, data_name[:-1], res, res_inter, False)
     # print(judge, judge_params, distribution_string)
     save_record(main_path, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
-    return judge_params, res1
+    return judge_params, res, res_inter
 
 
 def get_start_index(main_path, data_name):
@@ -390,40 +462,45 @@ def create_label_string(cluster_labels, const_cn_ad_labels):
     return ["{}+{}".format(dic.get("CN"), dic.get("AD")) for dic in dic_list]
 
 
-def initial_record(main_path, data_x_raw, data_name, seed_count=10):
+def initial_record(main_path, data_x_raw, data_name, seed_count=10, K=5):
     if not os.path.exists(main_path + "record/{}/record.csv".format(data_name)):
         copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record.csv".format(data_name))
-        clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS]
+        clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS] + [item + "_inter_count" for item in CLINICAL_LABELS]
         dic = dict()
         res_all = []
+        res_all_inter = []
         for one_label in clinical_judge_labels:
             dic[one_label] = 0
         print("Building kmeans bases... Please wait...")
         for seed in tqdm(range(seed_count)):
             kmeans_labels = get_kmeans_base(data_x_raw, seed)
-            tmp_params, res = build_kmeans_result(main_path, kmeans_labels, data_name)
+            tmp_params, res, res_inter = build_kmeans_result(main_path, kmeans_labels, data_name)
             res_all.append(res)
+            res_all_inter.append(res_inter)
             for one_label in clinical_judge_labels:
                 dic[one_label] += tmp_params.get(one_label)
         for one_label in clinical_judge_labels:
-            dic[one_label] = round(dic[one_label] / seed_count, 2) if seed_count > 0 else 0
+            dic[one_label] = round(dic.get(one_label) / seed_count, 2) if seed_count > 0 else 0
         with open("data/initial/{}/base_dic.pkl".format(data_name), "wb") as f:
             pickle.dump(dic, f)
-        # print(len(res_all[0]), len(res_all[0][0]))
         save_record(main_path, 0, "None", -1, dic, "kmeans_base_average", data_name)
         if seed_count > 0:
             np.save("data/initial/{}/base_res.npy".format(data_name), res_all[0], allow_pickle=True)
-            return dic, res_all[0]
+            np.save("data/initial/{}/base_res_inter.npy".format(data_name), res_all_inter[0], allow_pickle=True)
+            return dic, res_all[0], res_all_inter[0]
         else:
             empty = [[[0] * 14] for i in range(5)]
+            empty_inter = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (K - 1) ** 2)).reshape((len(CLINICAL_LABELS), K - 1, K - 1))
             np.save("data/initial/{}/base_res.npy".format(data_name), empty, allow_pickle=True)
-            return dic, empty
+            np.save("data/initial/{}/base_res_inter.npy".format(data_name), empty_inter, allow_pickle=True)
+            return dic, empty, empty_inter
 
     else:
         with open("data/initial/{}/base_dic.pkl".format(data_name), "rb") as f:
             dic = pickle.load(f)
         base_res = np.load("data/initial/{}/base_res.npy".format(data_name), allow_pickle=True)
-        return dic, base_res
+        base_res_inter = np.load("data/initial/{}/base_res_inter.npy".format(data_name), allow_pickle=True)
+        return dic, base_res, base_res_inter
 
 
 def name_label(label):
@@ -753,6 +830,14 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
+    data_x_raw = load_data(main_path, "/data/data_x/data_x_gamma1_raw.npy")
+    kmeans_labels = get_kmeans_base(data_x_raw, 1)
+    s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "gamma")
+    for item in res:
+        print(item)
+    print(res)
+    draw_stairs(res, res, "test/inter_cluster")
+    # draw_stairs(1,1,1,1)
     # build_data_x_y_gamma(main_path)
     # path = "saves/gamma1/1/proposed/trained/results/labels.npy"
     # data = np.load(path, allow_pickle=True)
