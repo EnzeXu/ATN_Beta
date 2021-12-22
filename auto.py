@@ -345,8 +345,9 @@ def start(params, opt):
         comments = platform.platform()
 
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
+    print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
-    base_dic, base_res = initial_record(main_path, data_x, data_x_raw, opt.data, int(opt.kmeans))
+    base_dic, base_res = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans))
     start_index = get_start_index(main_path, opt.data)
 
     for i in range(times):

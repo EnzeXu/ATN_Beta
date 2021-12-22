@@ -387,7 +387,7 @@ def create_label_string(cluster_labels, const_cn_ad_labels):
     return ["{}+{}".format(dic.get("CN"), dic.get("AD")) for dic in dic_list]
 
 
-def initial_record(main_path, data_x, data_x_raw, data_name, seed_count=10):
+def initial_record(main_path, data_x_raw, data_name, seed_count=10):
     if not os.path.exists(main_path + "record/{}/record.csv".format(data_name)):
         copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record.csv".format(data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS]
@@ -478,6 +478,7 @@ def get_kmeans_base(data_x_raw, seed=0):
     kmeans_output = []
     tmp_index = 0
     for item in data_x_raw:
+        print(len(item))
         kmeans_output.append(kmeans.labels_[tmp_index: tmp_index + len(item)])
         tmp_index += len(item)
     print("tmp_index:", tmp_index)
