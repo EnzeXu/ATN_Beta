@@ -280,7 +280,8 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
             print("bad in drawing inter_cluster map")
             return 1, bad_result
         dt.append(tmp)
-
+    with open("test_dt.pkl", "wb") as f:
+        pickle.dump(dt, f)
     for i in range(1, K):
         for j in range(0, K - 1):
             # if j > i:
