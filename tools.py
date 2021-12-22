@@ -233,7 +233,7 @@ def get_heat_map_data(main_path, K, label, data_type):
         for one_target_label in target_labels:
             dic[one_target_label] = []
         for j, one_pt_id in enumerate(pt_ids):
-            for k, one_exam_date in enumerate(pt_dic.get(pt_ids)):
+            for k, one_exam_date in enumerate(list(pt_dic.get(pt_ids))):
                 if label[j][k] == i:
                     for one_target_label in target_labels:
                         tmp = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]
