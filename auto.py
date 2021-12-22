@@ -36,9 +36,9 @@ import time
 from tools import *
 
 
-def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, print_flag=True):
+def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, print_flag=True):
     if print_flag:
-        print("[{:0>4d}][Step 1] Loading data".format(data_name))
+        print("[{:0>4d}][Step 1] Loading data".format(times_count))
     # data_x = load_data(main_path, "/data/data_x_new.npy")
     data_y = load_data(main_path, "/data/data_y/data_y_{}.npy".format(opt.data[0:-1]))
     seed = 1234
@@ -57,7 +57,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
 
 
     if print_flag:
-        print("[{:0>4d}][Step 2] Define network parameters".format(data_name))
+        print("[{:0>4d}][Step 2] Define network parameters".format(times_count))
     # DEFINE NETWORK PARAMETERS
     K = parameters.get("K")  # 5  # 5
     h_dim_FC = parameters.get("h_dim_FC")  # 26  # for fully_connected layers
@@ -91,14 +91,14 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
 
     # TRAIN -- INITIALIZE NETWORK
     if print_flag:
-        print("[{:0>4d}][Step 3] Initialize network".format(data_name))
+        print("[{:0>4d}][Step 3] Initialize network".format(times_count))
     lr_rate = parameters.get("lr_rate")  # 0.0001  # 0.0001
     keep_prob = parameters.get("keep_prob_s3")  # 0.5  # 0.5
     mb_size = parameters.get("mb_size_s3")  # 32  # 128 # 32
-    # data_name = '10'
+    # times_count = '10'
     ITERATION = parameters.get("iteration_s3")  # 1000  # 3750
     check_step = parameters.get("check_step_s3")  # 250  # 250
-    save_path = main_path + 'saves/{}/{}/proposed/init/'.format(opt.data, data_name)  # ENZE updated
+    save_path = main_path + 'saves/{}/{}/proposed/init/'.format(opt.data, times_count)  # ENZE updated
     if not os.path.exists(save_path + '/models/'):
         os.makedirs(save_path + '/models/')
     tf.reset_default_graph()
@@ -135,7 +135,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
 
     # TRAIN TEMPORAL PHENOTYPING
     if print_flag:
-        print("[{:0>4d}][Step 4] Train temporal phenotyping".format(data_name))
+        print("[{:0>4d}][Step 4] Train temporal phenotyping".format(times_count))
     alpha = parameters.get("alpha")  # 0.001  # 0.00001
     beta = parameters.get("beta")  # 1  # 1
     mb_size = parameters.get("mb_size_s4")  # 8  # 128#8
@@ -143,7 +143,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     keep_prob = parameters.get("keep_prob_s4")  # 0.7
     lr_rate1 = parameters.get("lr_rate1")  # 0.0001  # 0.0001
     lr_rate2 = parameters.get("lr_rate2")  # 0.0001  # 0.0001
-    save_path = main_path + 'saves/{}/{}/proposed/trained/'.format(opt.data, data_name)  # ENZE updated
+    save_path = main_path + 'saves/{}/{}/proposed/trained/'.format(opt.data, times_count)  # ENZE updated
     if not os.path.exists(save_path + '/models/'):
         os.makedirs(save_path + '/models/')
     if not os.path.exists(save_path + '/results/'):
@@ -151,8 +151,8 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
 
     # LOAD INITIALIZED NETWORK
     if print_flag:
-        print("[{:0>4d}][Step 5] Load initialized network".format(data_name))
-    load_path = main_path + 'saves/{}/{}/proposed/init/'.format(opt.data, data_name)  # ENZE updated
+        print("[{:0>4d}][Step 5] Load initialized network".format(times_count))
+    load_path = main_path + 'saves/{}/{}/proposed/init/'.format(opt.data, times_count)  # ENZE updated
     tf.reset_default_graph()
     # Turn on xla optimization
     config = tf.ConfigProto()
@@ -166,7 +166,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
 
     # INITIALIZING EMBEDDING & SELECTOR
     if print_flag:
-        print("[{:0>4d}][Step 6] Initializing embedding & selector".format(data_name))
+        print("[{:0>4d}][Step 6] Initializing embedding & selector".format(times_count))
     # K-means over the latent encodings
     e, s_init, tmp_z = initialize_embedding(model, tr_data_x, K)
     e = np.arctanh(e)
@@ -186,7 +186,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     new_e = np.copy(e)
 
     if print_flag:
-        print("[{:0>4d}][Step 7] Training main algorithm".format(data_name))
+        print("[{:0>4d}][Step 7] Training main algorithm".format(times_count))
     # TRAINING MAIN ALGORITHM
     ITERATION = parameters.get("iteration_s7")  # 500  # 5000
     check_step = parameters.get("check_step_s7")  # 100
@@ -237,7 +237,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     # f1.close()
 
     if print_flag:
-        print("[{:0>4d}][Step 8] Saving".format(data_name))
+        print("[{:0>4d}][Step 8] Saving".format(times_count))
     saver.save(sess, save_path + '/models/model_K{}'.format(K))
     save_logging(network_settings, save_path + '/models/network_settings_K{}.txt'.format(K))
     np.savez(save_path + 'models/embeddings.npz', e=e)
@@ -263,6 +263,7 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
     # plt.savefig(save_path + 'results/figure_clustering_hist.png')
     # plt.close()
     # patientProgressions = np.array_split(pred_y, 320)
+    pred_y = [item[0] for item in pred_y]
     pt_dic = load_patient_dictionary(main_path, opt.data[:-1])
     pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
     output_labels = []
@@ -329,9 +330,9 @@ def train(main_path, opt, data_x, data_name, parameters, base_dic, base_res, pri
         f.write(string)
     print(output_labels)
     heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
-    draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, data_name))
+    draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, times_count))
     # print(heat_map_data)
-    judge, judge_params, distribution_string = judge_good_train(output_labels, data_name[:-1], heat_map_data, True, base_dic, base_res)
+    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, True, base_dic, base_res)
     return judge, judge_params, distribution_string
 
 
@@ -345,7 +346,7 @@ def start(params, opt):
         comments = platform.platform()
 
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
-    print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
+    # print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     base_dic, base_res = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans))
     start_index = get_start_index(main_path, opt.data)

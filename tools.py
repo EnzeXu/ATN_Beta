@@ -484,7 +484,7 @@ def get_kmeans_base(data_x_raw, seed=0):
         print(len(item))
         kmeans_output.append(kmeans.labels_[tmp_index: tmp_index + len(item)])
         tmp_index += len(item)
-    print("tmp_index:", tmp_index)
+    # print("tmp_index:", tmp_index)
     # dim = len(data_x[0])
     # for i in range(len(data_x)):
     #     tmp = kmeans.labels_[i * dim: i * dim + dim]
