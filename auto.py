@@ -161,8 +161,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     ##### network_settings = load_logging(load_path + 'models/network_settings_K{}.txt'.format(K))
     z_dim = network_settings['num_layers_encoder'] * network_settings['h_dim_encoder']
     model = AC_TPC(sess, "AC_TPC", input_dims, network_settings)
-    saver = tf.train.Saver()
-    saver.restore(sess, load_path + 'models/model_K{}'.format(K))
+    ##### saver = tf.train.Saver()
+    ##### saver.restore(sess, load_path + 'models/model_K{}'.format(K))
 
     # INITIALIZING EMBEDDING & SELECTOR
     if print_flag:
