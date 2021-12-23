@@ -131,7 +131,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
             print("ITR {:05d}: loss_train={:.3f} loss_val={:.3f}".format(itr + 1, avg_loss, avg_val_loss))
             avg_loss = 0
     ##### saver.save(sess, save_path + 'models/model_K{}'.format(K))
-    ##### save_logging(network_settings, save_path + 'models/network_settings_K{}.txt'.format(K))
+    save_logging(network_settings, save_path + 'models/network_settings_K{}.txt'.format(K))
 
     # TRAIN TEMPORAL PHENOTYPING
     if print_flag:
@@ -158,7 +158,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-    ##### network_settings = load_logging(load_path + 'models/network_settings_K{}.txt'.format(K))
+    network_settings = load_logging(load_path + 'models/network_settings_K{}.txt'.format(K))
     z_dim = network_settings['num_layers_encoder'] * network_settings['h_dim_encoder']
     model = AC_TPC(sess, "AC_TPC", input_dims, network_settings)
     ##### saver = tf.train.Saver()
@@ -239,7 +239,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     if print_flag:
         print("[{:0>4d}][Step 8] Saving".format(times_count))
     ##### saver.save(sess, save_path + '/models/model_K{}'.format(K))
-    ##### save_logging(network_settings, save_path + '/models/network_settings_K{}.txt'.format(K))
+    save_logging(network_settings, save_path + '/models/network_settings_K{}.txt'.format(K))
     ##### np.savez(save_path + 'models/embeddings.npz', e=e)
     ##### saver.restore(sess, save_path + 'models/model_K{}'.format(K))
 
