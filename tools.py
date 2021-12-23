@@ -324,7 +324,7 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
 
 def count_inter(data_inter, threshold=0.05):
     dic = dict()
-    print("data_inter:")
+    print("heat_map_data_inter in count_inter:")
     print(data_inter)
     for i, one_target in enumerate(CLINICAL_LABELS):
         dic[one_target + "_inter_count"] = 0
@@ -332,12 +332,12 @@ def count_inter(data_inter, threshold=0.05):
             for k in range(len(data_inter[i][j])):
                 if data_inter[i][j][k] <= threshold:
                     dic[one_target + "_inter_count"] += 1
-    print("dic:")
-    print(dic)
     return dic
 
 
 def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag=True, base_dic=None, K=5):
+    print("heat_map_data_inter in judge_good_train:")
+    print(heat_map_data_inter)
     cn_ad_labels = np.load("data/cn_ad_labels_{}.npy".format(data_type), allow_pickle=True)
     dic = dict()
     for i in range(K):

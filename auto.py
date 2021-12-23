@@ -334,6 +334,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster".format(opt.data, times_count))
     draw_stairs(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster".format(opt.data, times_count))
     # print(heat_map_data)
+    print("heat_map_data_inter in train:")
+    print(heat_map_data_inter)
     judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic)
     return judge, judge_params, distribution_string
 
