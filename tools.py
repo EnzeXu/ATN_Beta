@@ -81,8 +81,8 @@ def draw_heat_map(data, s=2):
 def draw_heat_map_2(data1, data2, save_path, s=2):
     pic_keys = ["var", "avg", "min"]
     for one_key in pic_keys:
-        data1_tmp = [item.get(one_key) for item in data1]
-        data2_tmp = [item.get(one_key) for item in data2]
+        data1_tmp = [item.get(one_key) for item in copy.deepcopy(data1)]
+        data2_tmp = [item.get(one_key) for item in copy.deepcopy(data2)]
         data_all = np.vstack((data1_tmp, data2_tmp))
         # print(data_all.shape)
         data_all = np.abs((data_all - data_all.mean(axis=0)) / data_all.std(axis=0))
@@ -140,8 +140,8 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
         #                 [1, 1, np.nan, np.nan],
         #                 [np.nan, 1, 1, np.nan],
         #                 [1, 1, np.nan, 1]])
-        k1 = np.asarray(data1[i])
-        k2 = np.asarray(data2[i])
+        k1 = np.asarray(copy.deepcopy(data1[i]))
+        k2 = np.asarray(copy.deepcopy(data2[i]))
         for j in range(len(k1)):
             for k in range(len(k1[j])):
                 if k1[j][k] <= threshold:
@@ -988,13 +988,15 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
-    draw_heat_map_2(data, data, "test/xx.png")
+    # data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
+    # draw_heat_map_2(data, data, "test/xx.png")
     # data_x_raw = load_data(main_path, "/data/data_x/data_x_gamma2_raw.npy")
     # kmeans_labels = get_kmeans_base(data_x_raw, 12)
-    # s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "gamma")
-    # for item in res:
-    #     print(item)
+    with open("test/test_output_labels", "rb") as f:
+        kmeans_labels = pickle.load(f)
+    s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "delta")
+    for item in res:
+        print(item)
     # print(res)
     # draw_stairs(res, res, "test/inter_cluster")
     # draw_stairs(1,1,1,1)

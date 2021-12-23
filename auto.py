@@ -332,8 +332,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
     print("\noutput_labels in train:")
     print(output_labels)
-    with open("test_output_labels", "wb") as f:
-        pickle.dump(output_labels, f)
+    # with open("test_output_labels", "wb") as f:
+    #     pickle.dump(output_labels, f)
     _, heat_map_data_inter = get_heat_map_data_inter(main_path, 5, output_labels, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster".format(opt.data, times_count))
     draw_stairs(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster".format(opt.data, times_count))
