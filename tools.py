@@ -50,12 +50,12 @@ def purity_score(y_true, y_pred):
 
 
 def string_to_stamp(string, string_format="%Y%m%d"):
-  string = str(string)
-  return time.mktime(time.strptime(string, string_format))
+    string = str(string)
+    return time.mktime(time.strptime(string, string_format))
 
 
 def minus_to_month(str1, str2):
-  return (string_to_stamp(str2) - string_to_stamp(str1)) / 86400 / 30
+    return (string_to_stamp(str2) - string_to_stamp(str1)) / 86400 / 30
 
 
 def load_data(main_path, file_name):
@@ -126,11 +126,11 @@ def draw_heat_map_2(data1, data2, save_path, s=2):
 
 
 def draw_stairs(data1, data2, save_path, threshold=0.05):
-    print("in draw_stairs:")
-    print("data1:")
-    print(data1)
-    print("data2:")
-    print(data2)
+    # print("in draw_stairs:")
+    # print("data1:")
+    # print(data1)
+    # print("data2:")
+    # print(data2)
     for i, one_target in enumerate(CLINICAL_LABELS):
         # k1 = np.asarray([[np.nan, np.nan, np.nan, np.nan],
         #                 [np.nan, np.nan, np.nan, np.nan],
@@ -324,12 +324,16 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
 
 def count_inter(data_inter, threshold=0.05):
     dic = dict()
+    print("data_inter:")
+    print(data_inter)
     for i, one_target in enumerate(CLINICAL_LABELS):
         dic[one_target + "_inter_count"] = 0
         for j in range(len(data_inter[i])):
             for k in range(len(data_inter[i][j])):
                 if data_inter[i][j][k] <= threshold:
                     dic[one_target + "_inter_count"] += 1
+    print("dic:")
+    print(dic)
     return dic
 
 
