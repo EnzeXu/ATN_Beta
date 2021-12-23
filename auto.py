@@ -158,7 +158,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-    network_settings = load_logging(load_path + 'models/network_settings_K{}.txt'.format(K))
+    ##### network_settings = load_logging(load_path + 'models/network_settings_K{}.txt'.format(K))
     z_dim = network_settings['num_layers_encoder'] * network_settings['h_dim_encoder']
     model = AC_TPC(sess, "AC_TPC", input_dims, network_settings)
     saver = tf.train.Saver()
