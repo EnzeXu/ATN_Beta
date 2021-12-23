@@ -79,43 +79,58 @@ def draw_heat_map(data, s=2):
 
 
 def draw_heat_map_2(data1, data2, save_path, s=2):
-    data1 = np.asarray(data1)
-    data1_normed = np.abs((data1 - data1.mean(axis=0)) / data1.std(axis=0))
-    data1_normed = data1_normed / s
-    data2 = np.asarray(data2)
-    data2_normed = np.abs((data2 - data2.mean(axis=0)) / data2.std(axis=0))
-    data2_normed = data2_normed / s
-    xlabels = CLINICAL_LABELS
-    ylabels = ["Subtype #{0}".format(i) for i in range(1, 6)]
-    fig = plt.figure(dpi=400, figsize=(21, 9))
-    ax = fig.add_subplot(121)
-    ax.set_title("k-means")
-    ax.set_xticks(range(len(xlabels)))
-    ax.set_xticklabels(xlabels, rotation=45)
-    ax.set_yticks(range(len(ylabels)))
-    ax.set_yticklabels(ylabels)
-    im = ax.imshow(data1_normed, cmap=plt.cm.hot, vmin=0, vmax=1)
-    cb = plt.colorbar(im, shrink=0.4)
-    cb.set_ticks([0, 1])
-    cb.set_ticklabels(["Low", "High"])
-    cb.set_label("Intra-cluster variance", fontdict={"rotation": 270})
-    ax = fig.add_subplot(122)
-    ax.set_title("DPS-Net")
-    ax.set_xticks(range(len(xlabels)))
-    ax.set_xticklabels(xlabels, rotation=45)
-    ax.set_yticks(range(len(ylabels)))
-    ax.set_yticklabels(ylabels)
-    im = ax.imshow(data2_normed, cmap=plt.cm.hot, vmin=0, vmax=1)
-    cb = plt.colorbar(im, shrink=0.4)
-    cb.set_ticks([0, 1])
-    cb.set_ticklabels(["Low", "High"])
-    cb.set_label("Intra-cluster variance", fontdict={"rotation": 270})
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=400)
-    plt.show()
+    pic_keys = ["var", "avg", "min"]
+    for one_key in pic_keys:
+        data1_tmp = [item.get(one_key) for item in data1]
+        data2_tmp = [item.get(one_key) for item in data2]
+        data_all = np.vstack((data1_tmp, data2_tmp))
+        # print(data_all.shape)
+        data_all = np.abs((data_all - data_all.mean(axis=0)) / data_all.std(axis=0))
+        data_all = data_all / s
+        data1_normed = data_all[:len(data1)]
+        data2_normed = data_all[-len(data2):]
+        # data1 = np.asarray(data1)
+        # data1_normed = np.abs((data1 - data1.mean(axis=0)) / data1.std(axis=0))
+        # data1_normed = data1_normed / s
+        # data2 = np.asarray(data2)
+        # data2_normed = np.abs((data2 - data2.mean(axis=0)) / data2.std(axis=0))
+        # data2_normed = data2_normed / s
+        xlabels = CLINICAL_LABELS
+        ylabels = ["Subtype #{0}".format(i) for i in range(1, 6)]
+        fig = plt.figure(dpi=400, figsize=(21, 9))
+        ax = fig.add_subplot(121)
+        ax.set_title("k-means")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data1_normed, cmap=plt.cm.hot, vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster variance", fontdict={"rotation": 270})
+        ax = fig.add_subplot(122)
+        ax.set_title("DPS-Net")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data2_normed, cmap=plt.cm.hot, vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster variance", fontdict={"rotation": 270})
+        plt.tight_layout()
+        plt.savefig("{}_{}.png".format(save_path, one_key), dpi=400)
+        # plt.show()
 
 
 def draw_stairs(data1, data2, save_path, threshold=0.05):
+    print("in draw_stairs:")
+    print("data1:")
+    print(data1)
+    print("data2:")
+    print(data2)
     for i, one_target in enumerate(CLINICAL_LABELS):
         # k1 = np.asarray([[np.nan, np.nan, np.nan, np.nan],
         #                 [np.nan, np.nan, np.nan, np.nan],
@@ -125,7 +140,8 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
         #                 [1, 1, np.nan, np.nan],
         #                 [np.nan, 1, 1, np.nan],
         #                 [1, 1, np.nan, 1]])
-        k1, k2 = np.asarray(data1[i]), np.asarray(data2[i])
+        k1 = np.asarray(data1[i])
+        k2 = np.asarray(data2[i])
         for j in range(len(k1)):
             for k in range(len(k1[j])):
                 if k1[j][k] <= threshold:
@@ -134,15 +150,16 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
                     k1[j][k] = np.nan
         for j in range(len(k2)):
             for k in range(len(k2[j])):
-                if k2[j][k] > threshold:
+                if k2[j][k] <= threshold:
                     k2[j][k] = 1
                 else:
                     k2[j][k] = np.nan
         ylabels = [2, 3, 4, 5]
         xlabels = [1, 2, 3, 4]
-        plt.xticks(np.arange(0, 4, 1), xlabels)
-        plt.yticks(np.arange(0, 4, 1), ylabels)
+        # plt.xticks(np.arange(0, 4, 1), xlabels)
+        # plt.yticks(np.arange(0, 4, 1), ylabels)
         fig = plt.figure(dpi=400, figsize=(7, 3))
+
         ax = fig.add_subplot(121)
         ax.set_title("k-means")
         ax.set_xticks(np.arange(0, 4, 1))
@@ -167,8 +184,8 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
             [3.5, -0.5, 3.5]
         ]:
             ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-
         ax.imshow(k1, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+
         ax = fig.add_subplot(122)
         ax.set_title("DPS-Net")
         ax.set_xticks(np.arange(0, 4, 1))
@@ -195,7 +212,7 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
         plt.suptitle("Inter-cluster difference [{}]".format(one_target))
         plt.tight_layout()
         plt.savefig("{}_{}.png".format(save_path, one_target), dpi=400)
-        #plt.show()
+        # plt.show()
 
 
 def get_engine():
@@ -237,7 +254,11 @@ def get_heat_map_data(main_path, K, label, data_type):
                     for one_target_label in target_labels:
                         tmp = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]
                         dic[one_target_label] += [float(tmp)]
-        result.append([np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels])
+        result.append({
+            "var": [np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels],
+            "avg": [np.mean(np.asarray(dic[one_target_label])) for one_target_label in target_labels],
+            "min": [np.min(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+        })
 
     return result
 
@@ -280,8 +301,8 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
             print("bad in drawing inter_cluster map")
             return 1, bad_result
         dt.append(tmp)
-    with open("test_dt.pkl", "wb") as f:
-        pickle.dump(dt, f)
+    # with open("dt_gamma2_kmeans_seed_12.pkl", "wb") as f:
+    #     pickle.dump(dt, f)
     for i in range(1, K):
         for j in range(0, K - 1):
             # if j > i:
@@ -324,7 +345,8 @@ def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag
     label_strings = create_label_string(labels, cn_ad_labels)
     distribution_string = "/".join(["{}({})".format(x, y) for x, y in zip(distribution, label_strings)])
     param_cluster_std = distribution.std()
-    fourteen_sums = np.asarray(heat_map_data).sum(axis=0) # three_sums = np.asarray(heat_map_data).sum(axis=0)
+    heat_map_data_var = [item.get("var") for item in heat_map_data]
+    fourteen_sums = np.asarray(heat_map_data_var).sum(axis=0) # three_sums = np.asarray(heat_map_data).sum(axis=0)
     count_inter_dic = count_inter(heat_map_data_inter)
     param_dic = dict()
     param_dic["Cluster_std"] = param_cluster_std
@@ -418,12 +440,6 @@ def get_start_index(main_path, data_name):
     return start_index
 
 
-def get_ac_tpc_result(main_path, index, data_type):
-    labels = np.load(main_path + 'saves/{}/proposed/trained/results/labels.npy'.format(index))
-    res = get_heat_map_data(main_path, 5, labels, data_type)
-    return res
-
-
 def build_cn_ad_labels(main_path, data_type):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
@@ -486,8 +502,8 @@ def initial_record(main_path, data_x_raw, data_name, seed_count=10, K=5):
             pickle.dump(dic, f)
         save_record(main_path, 0, "None", -1, dic, "kmeans_base_average", data_name)
         if seed_count > 0:
-            np.save("data/initial/{}/base_res.npy".format(data_name), res_all[0], allow_pickle=True)
-            np.save("data/initial/{}/base_res_inter.npy".format(data_name), res_all_inter[0], allow_pickle=True)
+            np.save("data/initial/{}/base_res.npy".format(data_name), res_all, allow_pickle=True)
+            np.save("data/initial/{}/base_res_inter.npy".format(data_name), res_all_inter, allow_pickle=True)
             return dic, res_all[0], res_all_inter[0]
         else:
             empty = [[[0] * 14] for i in range(5)]
@@ -499,9 +515,9 @@ def initial_record(main_path, data_x_raw, data_name, seed_count=10, K=5):
     else:
         with open("data/initial/{}/base_dic.pkl".format(data_name), "rb") as f:
             dic = pickle.load(f)
-        base_res = np.load("data/initial/{}/base_res.npy".format(data_name), allow_pickle=True)
-        base_res_inter = np.load("data/initial/{}/base_res_inter.npy".format(data_name), allow_pickle=True)
-        return dic, base_res, base_res_inter
+        base_res_all = np.load("data/initial/{}/base_res.npy".format(data_name), allow_pickle=True)
+        base_res_inter_all = np.load("data/initial/{}/base_res_inter.npy".format(data_name), allow_pickle=True)
+        return dic, base_res_all[0], base_res_inter_all[0]
 
 
 def name_label(label):
@@ -968,15 +984,17 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    # data_x_raw = load_data(main_path, "/data/data_x/data_x_gamma1_raw.npy")
-    # kmeans_labels = get_kmeans_base(data_x_raw, 1)
+    data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
+    draw_heat_map_2(data, data, "test/xx.png")
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_gamma2_raw.npy")
+    # kmeans_labels = get_kmeans_base(data_x_raw, 12)
     # s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "gamma")
     # for item in res:
     #     print(item)
     # print(res)
     # draw_stairs(res, res, "test/inter_cluster")
     # draw_stairs(1,1,1,1)
-    build_data_x_y_delta(main_path)
+    # build_data_x_y_delta(main_path)
     # path = "saves/gamma1/1/proposed/trained/results/labels.npy"
     # data = np.load(path, allow_pickle=True)
     # print(data.shape)

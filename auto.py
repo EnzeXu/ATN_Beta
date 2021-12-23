@@ -331,7 +331,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     # print(output_labels)
     heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
     _, heat_map_data_inter = get_heat_map_data_inter(main_path, 5, output_labels, opt.data[:-1])
-    draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/heatmap.png".format(opt.data, times_count))
+    draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster".format(opt.data, times_count))
     draw_stairs(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster".format(opt.data, times_count))
     # print(heat_map_data)
     judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic)
@@ -349,7 +349,7 @@ def start(params, opt):
 
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
     # print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
-    data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
+    data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if "alpha" in opt.data else "_raw"))
     base_dic, base_res, base_res_inter = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans))
     start_index = get_start_index(main_path, opt.data)
 
