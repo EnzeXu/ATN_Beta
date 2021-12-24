@@ -329,18 +329,18 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         )
         f.write(string)
     # print(output_labels)
-    heat_map_data = get_heat_map_data(main_path, 5, output_labels, opt.data[:-1])
-    print("\noutput_labels in train:")
-    print(output_labels)
+    heat_map_data = get_heat_map_data(main_path, int(opt.k), output_labels, opt.data[:-1])
+    # print("\noutput_labels in train:")
+    # print(output_labels)
     # with open("test_output_labels", "wb") as f:
     #     pickle.dump(output_labels, f)
-    _, heat_map_data_inter = get_heat_map_data_inter(main_path, 5, output_labels, opt.data[:-1])
+    _, heat_map_data_inter = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1])
     draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster".format(opt.data, times_count))
     draw_stairs(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster".format(opt.data, times_count))
     # print(heat_map_data)
     print("heat_map_data_inter in train:")
     print(heat_map_data_inter)
-    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic)
+    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic, int(opt.k))
     return judge, judge_params, distribution_string
 
 
@@ -356,7 +356,7 @@ def start(params, opt):
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
     # print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if "alpha" in opt.data else "_raw"))
-    base_dic, base_res, base_res_inter = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans))
+    base_dic, base_res, base_res_inter = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans), int(opt.k))
     start_index = get_start_index(main_path, opt.data)
 
     for i in range(times):
@@ -368,9 +368,16 @@ def start(params, opt):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num", default=500, help="number of training")
+    parser.add_argument("--comment", default="", help="any comment")
+    parser.add_argument("--data", default="alpha1", help="dataset of data_x (alpha1, alpha2, alpha3 or alpha4)")
+    parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
+    parser.add_argument("--k", default=5, help="number of clusters needed")
+    opt = parser.parse_args()
     params = {
         # [Step 2] Define network parameters
-        'K': 5,                     # 5
+        'K': int(opt.k),            # 5
         'h_dim_FC': 8,              # 26
         'h_dim_RNN': 8,             # 26
         'num_layer_encoder': 2,     # 2
@@ -397,12 +404,6 @@ if __name__ == "__main__":
         'check_step_s7': 100        # 100
     }
     print(json.dumps(params, indent=4, ensure_ascii=False))
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--num", default=500, help="number of training")
-    parser.add_argument("--comment", default="", help="any comment")
-    parser.add_argument("--data", default="alpha1", help="dataset of data_x (alpha1, alpha2, alpha3 or alpha4)")
-    parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
-    opt = parser.parse_args()
     start(params, opt)
 
 

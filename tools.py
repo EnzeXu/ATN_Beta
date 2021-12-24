@@ -78,8 +78,23 @@ def draw_heat_map(data, s=2):
     plt.show()
 
 
+def draw_320(data, k=5):
+    data_clear = []
+    for item in data:
+        data_clear.append(list(item) + [np.nan] * (9 - len(item)))
+    print(data_clear)
+    data_clear = np.asarray(data_clear).swapaxes(0, 1)
+    plt.figure(dpi=400, figsize=(60, 3))
+    plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    plt.imshow(data_clear, interpolation='nearest', cmap=plt.cm.jet, vmin=0, vmax=(k-1))
+    plt.title('320*9')
+    plt.savefig("test/pic1.png", bbox_inches="tight")
+    plt.show()
+
+
 def draw_heat_map_2(data1, data2, save_path, s=2):
     pic_keys = ["var", "avg", "min"]
+    k = len(data1)
     for one_key in pic_keys:
         data1_tmp = [item.get(one_key) for item in copy.deepcopy(data1)]
         data2_tmp = [item.get(one_key) for item in copy.deepcopy(data2)]
@@ -96,7 +111,7 @@ def draw_heat_map_2(data1, data2, save_path, s=2):
         # data2_normed = np.abs((data2 - data2.mean(axis=0)) / data2.std(axis=0))
         # data2_normed = data2_normed / s
         xlabels = CLINICAL_LABELS
-        ylabels = ["Subtype #{0}".format(i) for i in range(1, 6)]
+        ylabels = ["Subtype #{0}".format(i) for i in range(1, k + 1)]
         fig = plt.figure(dpi=400, figsize=(21, 9))
         ax = fig.add_subplot(121)
         ax.set_title("k-means")
@@ -131,83 +146,74 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
     # print(data1)
     # print("data2:")
     # print(data2)
+    k = len(data1)
     for i, one_target in enumerate(CLINICAL_LABELS):
-        # k1 = np.asarray([[np.nan, np.nan, np.nan, np.nan],
-        #                 [np.nan, np.nan, np.nan, np.nan],
-        #                 [1, 1, 1, np.nan],
-        #                 [np.nan, np.nan, 1, np.nan]])
-        # k2 = np.asarray([[1, np.nan, np.nan, np.nan],
-        #                 [1, 1, np.nan, np.nan],
-        #                 [np.nan, 1, 1, np.nan],
-        #                 [1, 1, np.nan, 1]])
         k1 = np.asarray(copy.deepcopy(data1[i]))
         k2 = np.asarray(copy.deepcopy(data2[i]))
         for j in range(len(k1)):
-            for k in range(len(k1[j])):
-                if k1[j][k] <= threshold:
-                    k1[j][k] = 1
+            for l in range(len(k1[j])):
+                if k1[j][l] <= threshold:
+                    k1[j][l] = 1
                 else:
-                    k1[j][k] = np.nan
+                    k1[j][l] = np.nan
         for j in range(len(k2)):
-            for k in range(len(k2[j])):
-                if k2[j][k] <= threshold:
-                    k2[j][k] = 1
+            for l in range(len(k2[j])):
+                if k2[j][l] <= threshold:
+                    k2[j][l] = 1
                 else:
-                    k2[j][k] = np.nan
-        ylabels = [2, 3, 4, 5]
-        xlabels = [1, 2, 3, 4]
-        # plt.xticks(np.arange(0, 4, 1), xlabels)
-        # plt.yticks(np.arange(0, 4, 1), ylabels)
+                    k2[j][l] = np.nan
+        ylabels = range(2, k + 1)  # [2, 3, 4, 5]
+        xlabels = range(1, k)  # [1, 2, 3, 4]
         fig = plt.figure(dpi=400, figsize=(7, 3))
 
         ax = fig.add_subplot(121)
         ax.set_title("k-means")
-        ax.set_xticks(np.arange(0, 4, 1))
+        ax.set_xticks(np.arange(0, k - 1, 1))
         ax.set_xticklabels(xlabels)
-        ax.set_yticks(np.arange(0, 4, 1))
+        ax.set_yticks(np.arange(0, k - 1, 1))
         ax.set_yticklabels(ylabels)
         for seat in ["left", "right", "top", "bottom"]:
             ax.spines[seat].set_visible(False)
-        for one_line in [
-            [-0.5, -0.5, 3.5],
-            [0.5, -0.5, 3.5],
-            [1.5, 0.5, 3.5],
-            [2.5, 1.5, 3.5],
-            [3.495, 2.5, 3.5]
-        ]:
-            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-        for one_line in [
-            [-0.495, -0.5, 0.5],
-            [0.5, -0.5, 1.5],
-            [1.5, -0.5, 2.5],
-            [2.5, -0.5, 3.5],
-            [3.5, -0.5, 3.5]
-        ]:
-            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        # for one_line in [
+        #     [-0.5, -0.5, 3.5],
+        #     [0.5, -0.5, 3.5],
+        #     [1.5, 0.5, 3.5],
+        #     [2.5, 1.5, 3.5],
+        #     [3.495, 2.5, 3.5]
+        # ]:
+        #     ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        # for one_line in [
+        #     [-0.495, -0.5, 0.5],
+        #     [0.5, -0.5, 1.5],
+        #     [1.5, -0.5, 2.5],
+        #     [2.5, -0.5, 3.5],
+        #     [3.5, -0.5, 3.5]
+        # ]:
+        #     ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
         ax.imshow(k1, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
 
         ax = fig.add_subplot(122)
         ax.set_title("DPS-Net")
-        ax.set_xticks(np.arange(0, 4, 1))
+        ax.set_xticks(np.arange(0, k - 1, 1))
         ax.set_xticklabels(xlabels)
-        ax.set_yticks(np.arange(0, 4, 1))
+        ax.set_yticks(np.arange(0, k - 1, 1))
         ax.set_yticklabels(ylabels)
         for seat in ["left", "right", "top", "bottom"]:
             ax.spines[seat].set_visible(False)
-        for one_line in [
-            [-0.5, -0.5, 3.5],
-            [0.5, -0.5, 3.5],
-            [1.5, 0.5, 3.5],
-            [2.5, 1.5, 3.5],
-            [3.495, 2.5, 3.5]]:
-            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
-        for one_line in [
-            [-0.495, -0.5, 0.5],
-            [0.5, -0.5, 1.5],
-            [1.5, -0.5, 2.5],
-            [2.5, -0.5, 3.5],
-            [3.5, -0.5, 3.5]]:
-            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        # for one_line in [
+        #     [-0.5, -0.5, 3.5],
+        #     [0.5, -0.5, 3.5],
+        #     [1.5, 0.5, 3.5],
+        #     [2.5, 1.5, 3.5],
+        #     [3.495, 2.5, 3.5]]:
+        #     ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        # for one_line in [
+        #     [-0.495, -0.5, 0.5],
+        #     [0.5, -0.5, 1.5],
+        #     [1.5, -0.5, 2.5],
+        #     [2.5, -0.5, 3.5],
+        #     [3.5, -0.5, 3.5]]:
+        #     ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
         ax.imshow(k2, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
         plt.suptitle("Inter-cluster difference [{}]".format(one_target))
         plt.tight_layout()
@@ -313,7 +319,7 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
         # tmp = item
         # for index in [1, 2, 3, 6, 7, 11]:
         #     tmp[index] = np.nan
-        tmp = np.asarray(item).reshape(4, 4)
+        tmp = np.asarray(item).reshape(K - 1, K - 1)
         for i in range(len(tmp)):
             for j in range(i + 1, len(tmp)):
                 tmp[i][j] = np.nan
@@ -335,18 +341,18 @@ def count_inter(data_inter, threshold=0.05):
     return dic
 
 
-def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag=True, base_dic=None, K=5):
+def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag, base_dic, k):
     print("heat_map_data_inter in judge_good_train:")
     print(heat_map_data_inter)
     cn_ad_labels = np.load("data/cn_ad_labels_{}.npy".format(data_type), allow_pickle=True)
     dic = dict()
-    for i in range(K):
+    for i in range(k):
         dic[i] = 0
     for row in labels:
         for item in row:
             dic[item if (type(item) == int or type(item) == np.int32) else item[0]] += 1
-    distribution = np.asarray([dic.get(i) for i in range(K)])
-    label_strings = create_label_string(labels, cn_ad_labels)
+    distribution = np.asarray([dic.get(i) for i in range(k)])
+    label_strings = create_label_string(labels, cn_ad_labels, k)
     distribution_string = "/".join(["{}({})".format(x, y) for x, y in zip(distribution, label_strings)])
     param_cluster_std = distribution.std()
     heat_map_data_var = [item.get("var") for item in heat_map_data]
@@ -425,11 +431,11 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
         f.write("\n")
 
 
-def build_kmeans_result(main_path, kmeans_labels, data_name):
+def build_kmeans_result(main_path, kmeans_labels, data_name, k):
     # kmeans_labels = np.asarray(kmeans_labels)
-    res = get_heat_map_data(main_path, 5, kmeans_labels, data_name[:-1])
-    _, res_inter = get_heat_map_data_inter(main_path, 5, kmeans_labels, data_name[:-1])
-    judge, judge_params, distribution_string = judge_good_train(kmeans_labels, data_name[:-1], res, res_inter, False)
+    res = get_heat_map_data(main_path, k, kmeans_labels, data_name[:-1])
+    _, res_inter = get_heat_map_data_inter(main_path, k, kmeans_labels, data_name[:-1])
+    judge, judge_params, distribution_string = judge_good_train(kmeans_labels, data_name[:-1], res, res_inter, False, None, k)
     # print(judge, judge_params, distribution_string)
     save_record(main_path, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
     return judge_params, res, res_inter
@@ -460,9 +466,9 @@ def build_cn_ad_labels(main_path, data_type):
     # return np.asarray(cn_ad_labels)
 
 
-def create_label_string(cluster_labels, const_cn_ad_labels):
+def create_label_string(cluster_labels, const_cn_ad_labels, k):
     dic_list = []
-    for i in range(5):
+    for i in range(k):
         dic = dict()
         dic["AD"] = 0
         dic["CN"] = 0
@@ -483,7 +489,7 @@ def create_label_string(cluster_labels, const_cn_ad_labels):
     return ["{}+{}".format(dic.get("CN"), dic.get("AD")) for dic in dic_list]
 
 
-def initial_record(main_path, data_x_raw, data_name, seed_count=10, K=5):
+def initial_record(main_path, data_x_raw, data_name, seed_count, k):
     if not os.path.exists(main_path + "record/{}/record.csv".format(data_name)):
         copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record.csv".format(data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS] + [item + "_inter_count" for item in CLINICAL_LABELS]
@@ -494,8 +500,8 @@ def initial_record(main_path, data_x_raw, data_name, seed_count=10, K=5):
             dic[one_label] = 0
         print("Building kmeans bases... Please wait...")
         for seed in tqdm(range(seed_count)):
-            kmeans_labels = get_kmeans_base(data_x_raw, seed)
-            tmp_params, res, res_inter = build_kmeans_result(main_path, kmeans_labels, data_name)
+            kmeans_labels = get_kmeans_base(data_x_raw, seed, k)
+            tmp_params, res, res_inter = build_kmeans_result(main_path, kmeans_labels, data_name, k)
             res_all.append(res)
             res_all_inter.append(res_inter)
             for one_label in clinical_judge_labels:
@@ -510,8 +516,8 @@ def initial_record(main_path, data_x_raw, data_name, seed_count=10, K=5):
             np.save("data/initial/{}/base_res_inter.npy".format(data_name), res_all_inter, allow_pickle=True)
             return dic, res_all[0], res_all_inter[0]
         else:
-            empty = [[[0] * 14] for i in range(5)]
-            empty_inter = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (K - 1) ** 2)).reshape((len(CLINICAL_LABELS), K - 1, K - 1))
+            empty = [[[0] * 14] for i in range(k)]
+            empty_inter = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (K - 1) ** 2)).reshape((len(CLINICAL_LABELS), k - 1, k - 1))
             np.save("data/initial/{}/base_res.npy".format(data_name), empty, allow_pickle=True)
             np.save("data/initial/{}/base_res_inter.npy".format(data_name), empty_inter, allow_pickle=True)
             return dic, empty, empty_inter
@@ -570,12 +576,12 @@ def load_patient_dictionary(main_path, data_type):
     return pt_dic
 
 
-def get_kmeans_base(data_x_raw, seed=0):
+def get_kmeans_base(data_x_raw, seed, k):
     data = []
     for item in data_x_raw:
         for vec in item:
             data.append(vec)
-    kmeans = KMeans(n_clusters=5, random_state=seed).fit(data)
+    kmeans = KMeans(n_clusters=k, random_state=seed).fit(data)
     kmeans_output = []
     tmp_index = 0
     for item in data_x_raw:
@@ -982,7 +988,6 @@ def build_data_x_y_delta(main_path, max_length=9):
     np.save(main_path + "data/data_x/data_x_delta4_raw.npy", data_x_delta4_raw, allow_pickle=True)
 
 
-
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
@@ -990,13 +995,15 @@ if __name__ == "__main__":
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
     # data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
     # draw_heat_map_2(data, data, "test/xx.png")
-    # data_x_raw = load_data(main_path, "/data/data_x/data_x_gamma2_raw.npy")
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta1_raw.npy")
     # kmeans_labels = get_kmeans_base(data_x_raw, 12)
-    with open("test/test_output_labels", "rb") as f:
-        kmeans_labels = pickle.load(f)
-    s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "delta")
-    for item in res:
-        print(item)
+    data = np.load("test/labels.npy", allow_pickle=True)
+    draw_320(data)
+    # with open("test/test_output_labels", "rb") as f:
+    #     kmeans_labels = pickle.load(f)
+    # s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "delta")
+    # for item in res:
+    #     print(item)
     # print(res)
     # draw_stairs(res, res, "test/inter_cluster")
     # draw_stairs(1,1,1,1)
