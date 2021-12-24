@@ -93,7 +93,7 @@ def draw_320(data, k=5):
 
 
 def draw_heat_map_2(data1, data2, save_path, s=2):
-    pic_keys = ["var", "avg", "min"]
+    pic_keys = ["var", "avg"]
     k = len(data1)
     for one_key in pic_keys:
         data1_tmp = [item.get(one_key) for item in copy.deepcopy(data1)]
@@ -262,8 +262,8 @@ def get_heat_map_data(main_path, K, label, data_type):
                         dic[one_target_label] += [float(tmp)]
         result.append({
             "var": [np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels],
-            "avg": [np.mean(np.asarray(dic[one_target_label])) for one_target_label in target_labels],
-            "min": [np.min(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+            "avg": [np.mean(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+            # "min": [np.min(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
         })
 
     return result
