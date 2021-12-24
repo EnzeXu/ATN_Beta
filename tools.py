@@ -260,10 +260,16 @@ def get_heat_map_data(main_path, K, label, data_type):
                     for one_target_label in target_labels:
                         tmp = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]
                         dic[one_target_label] += [float(tmp)]
+        try:
+            tmp_var = [np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+            tmp_avg = [np.mean(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+        except Exception as e:
+            print("Error in var and avg:", e)
+            tmp_var = [np.nan for one_target_label in target_labels]
+            tmp_avg = [np.nan for one_target_label in target_labels]
         result.append({
-            "var": [np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels],
-            "avg": [np.mean(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
-            # "min": [np.min(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+            "var": tmp_var,
+            "avg": tmp_avg
         })
 
     return result
