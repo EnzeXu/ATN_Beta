@@ -272,8 +272,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         output_labels.append(pred_y[tmp_index: tmp_index + len(pt_dic.get(pt_id))])
         tmp_index += len(pt_dic.get(pt_id))
     # print(patientProgressions)
-    np.save(save_path + "results/labels.npy", output_labels, allow_pickle=True)
-    with open(save_path + "results/parameters.txt", "w") as f:
+    np.save(main_path + "saves/{}/{}/labels_{}.npy".format(opt.data, times_count, times_count), output_labels, allow_pickle=True)
+    with open(main_path + "saves/{}/{}/parameters_{}.txt".format(opt.data, times_count, times_count), "w") as f:
         string = "# [Step 2] Define network parameters\n" \
                  "'K': {},\n" \
                  "'h_dim_FC': {},\n" \
