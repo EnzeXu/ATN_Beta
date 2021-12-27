@@ -20,6 +20,7 @@ from sklearn.cluster import KMeans
 from strings import CLINICAL_LABELS, DATA_SETS
 import scipy.io as scio
 from scipy import stats
+from sklearn.manifold import TSNE
 
 
 def f_get_minibatch(mb_size, x, y):
@@ -273,6 +274,131 @@ def get_heat_map_data(main_path, K, label, data_type):
         })
 
     return result
+
+
+def one_time_heat_map_data_box(main_path, K, label, data_type):
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    pt_dic = load_patient_dictionary(main_path, data_type)
+
+    data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    target_labels = CLINICAL_LABELS
+    data = data[["PTID", "EXAMDATE"] + target_labels]
+    data = data[pd.notnull(data["EcogPtMem"])]
+
+    for one_label in target_labels:
+        data[one_label] = fill_nan(data[one_label])
+
+    output_dic = dict()
+
+    for i, one_pt_id in enumerate(pt_ids):
+        for j, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            tmp_dic = dict()
+            tmp_dic["label"] = label[i][j]
+            tmp_dic["clinical"] = []
+            for one_target_label in target_labels:
+                tmp_clinical = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]
+                tmp_dic["clinical"] += [float(tmp_clinical)]
+            output_dic["{}/{}".format(one_pt_id, one_exam_date)] = tmp_dic
+    print(len(list(output_dic.keys())), output_dic.keys())
+    with open("test/box_data.pkl", "wb") as f:
+        pickle.dump(output_dic, f)
+    return
+
+
+def one_time_tsne_data_x(main_path, label, data_name):
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    pt_dic = load_patient_dictionary(main_path, data_name[:-1])
+    data_x_raw = load_data(main_path, "/data/data_x/data_x_{}.npy".format(data_name))
+    # data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    # target_labels = CLINICAL_LABELS
+    # data = data[["PTID", "EXAMDATE"] + target_labels]
+    # data = data[pd.notnull(data["EcogPtMem"])]
+    #
+    # for one_label in target_labels:
+    #     data[one_label] = fill_nan(data[one_label])
+    # output_data = [[] for i in range(K)]
+    output_data = []
+    colors = []
+    for i, one_pt_id in enumerate(pt_ids):
+        for j, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            colors.append(label[i][j])
+            output_data.append(data_x_raw[i][j])
+    # print([len(item) for item in output_data])
+    with open("test/tsne_data.pkl", "wb") as f:
+        pickle.dump(output_data, f)
+    with open("test/tsne_data_colors.pkl", "wb") as f:
+        pickle.dump(colors, f)
+    return
+
+
+def one_time_tsne_data_y(main_path, label, data_name):
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    pt_dic = load_patient_dictionary(main_path, data_name[:-1])
+    data_y = load_data(main_path, "/data/data_y/data_y_{}.npy".format(data_name[:-1]))
+    # data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    # target_labels = CLINICAL_LABELS
+    # data = data[["PTID", "EXAMDATE"] + target_labels]
+    # data = data[pd.notnull(data["EcogPtMem"])]
+    #
+    # for one_label in target_labels:
+    #     data[one_label] = fill_nan(data[one_label])
+    # output_data = [[] for i in range(K)]
+    target_labels = [""]
+    output_data = []
+    colors = []
+    for i, one_pt_id in enumerate(pt_ids):
+        for j, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            colors.append(label[i][j])
+            output_data.append(data_y[i][j])
+    # print([len(item) for item in output_data])
+    with open("test/tsne_data.pkl", "wb") as f:
+        pickle.dump(output_data, f)
+    with open("test/tsne_data_colors.pkl", "wb") as f:
+        pickle.dump(colors, f)
+    return
+
+
+def one_time_deal_tsne(perplexity=30):
+    with open("test/tsne_data.pkl", "rb") as f:
+        data = pickle.load(f)
+    # lengths = [len(item) for item in data]
+    # k = len(lengths)
+    # print(lengths)
+    # data_all = []
+    # for item in data:
+    #     data_all += item
+    data = np.array(data)
+    print(data.shape)
+    t0 = time.time()
+    data_all_embedded = TSNE(n_components=2, perplexity=perplexity, early_exaggeration=12, learning_rate=300, init="random").fit_transform(data)
+    # data_all_embedded = TSNE(n_components=2, perplexity=perplexity, early_exaggeration=12, learning_rate=300,
+    #                          init='random').fit_transform(data_all)
+    t1 = time.time()
+    print(t1 - t0, "s")
+    print(data_all_embedded.shape)
+    # data_plot = []
+    # index = 0
+    # for one_length in lengths:
+    #     data_plot.append(data_all_embedded[0: one_length])
+    #     index += one_length
+    # print([len(item) for item in data_plot])
+    with open("test/tsne_data_plot.pkl", "wb") as f:
+        pickle.dump(data_all_embedded, f)
+
+
+def one_time_draw_tsne():
+    with open("test/tsne_data_plot.pkl", "rb") as f:
+        data = pickle.load(f)
+    with open("test/tsne_data_colors.pkl", "rb") as f:
+        colors = pickle.load(f)
+    print([colors.count(item) for item in range(len(list(set(colors))))])
+    # print([len(item) for item in data_plot])
+    color_types = ["red", "cyan", "blue", "green", "orange", "yellow", "magenta"]
+    for i, point in enumerate(data):
+        plt.scatter(point[0], point[1], s=5, c=color_types[colors[i]])
+    plt.show()
+
+
 
 
 def get_heat_map_data_inter(main_path, K, label, data_type):
@@ -747,8 +873,8 @@ def split_periods_delta(periods):
 
 def build_data_x_y_gamma(main_path, max_length=9):
     df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
-    target_labels = CLINICAL_LABELS
-    df = df[["PTID", "EXAMDATE"] + target_labels]
+    target_labels = ["MMSE", "CDRSB", "ADAS13"]
+    df = df[["PTID", "EXAMDATE"] + target_labels + ["EcogPtMem"]]
     df = df[pd.notnull(df["EcogPtMem"])]
     # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
     # df["PTID"] = [str(item) for item in df["PTID"]]
@@ -870,8 +996,8 @@ def build_data_x_y_gamma(main_path, max_length=9):
 
 def build_data_x_y_delta(main_path, max_length=9):
     df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
-    target_labels = CLINICAL_LABELS
-    df = df[["PTID", "EXAMDATE"] + target_labels]
+    target_labels = ["MMSE", "CDRSB", "ADAS13"]
+    df = df[["PTID", "EXAMDATE"] + target_labels + ["EcogPtMem"]]
     df = df[pd.notnull(df["EcogPtMem"])]
     # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
     # df["PTID"] = [str(item) for item in df["PTID"]]
@@ -1001,10 +1127,23 @@ if __name__ == "__main__":
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
     # data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
     # draw_heat_map_2(data, data, "test/xx.png")
-    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta1_raw.npy")
-    # kmeans_labels = get_kmeans_base(data_x_raw, 12)
-    data = np.load("test/labels.npy", allow_pickle=True)
-    draw_320(data)
+    data = np.load("data/data_y/data_y_gamma.npy", allow_pickle=True)
+    print(data[0][0])
+
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta2_raw.npy")
+    # kmeans_labels = get_kmeans_base(data_x_raw, 0, 7)
+    # # label = np.load("test/labels_1.npy", allow_pickle=True)
+    #
+    # one_time_tsne_data_y(main_path, kmeans_labels, "delta2")
+    # one_time_deal_tsne(50)
+    # one_time_draw_tsne()
+    # with open("test/data.dat", "r") as f:
+    #     lines = f.readlines()
+    # print(len(lines))
+    # print([len(item) for item in lines])
+    # print(lines)
+    # data = np.load("test/labels.npy", allow_pickle=True)
+    # draw_320(data)
     # with open("test/test_output_labels", "rb") as f:
     #     kmeans_labels = pickle.load(f)
     # s, res = get_heat_map_data_inter(main_path, 5, kmeans_labels, "delta")
