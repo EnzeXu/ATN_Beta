@@ -341,6 +341,9 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     print("heat_map_data_inter in train:")
     print(heat_map_data_inter)
     judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic, int(opt.k))
+    if int(opt.clear) == 1:
+        shutil.rmtree("saves/{}/{}/proposed".format(opt.data, times_count))
+        print("Removed folder {} after training".format("saves/{}/{}/proposed".format(opt.data, times_count)))
     return judge, judge_params, distribution_string
 
 
@@ -374,6 +377,7 @@ if __name__ == "__main__":
     parser.add_argument("--data", default="alpha1", help="dataset of data_x (alpha1, alpha2, alpha3 or alpha4)")
     parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
     parser.add_argument("--k", default=5, help="number of clusters needed")
+    parser.add_argument("--clear", default=1, help="whether to clear the proposed file")
     opt = parser.parse_args()
     params = {
         # [Step 2] Define network parameters

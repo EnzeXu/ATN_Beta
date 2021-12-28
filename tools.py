@@ -1,26 +1,29 @@
 import copy
-
-import numpy as np
 import random
-from sklearn.metrics import roc_auc_score, average_precision_score
-from sklearn.metrics.cluster import contingency_matrix
-import warnings
-import pandas as pd
 import math
 import time
-import matplotlib.pyplot as plt
 import os
 import platform
+import pickle
+import shutil
+import numpy as np
+import pandas as pd
+import scipy.io as scio
+import matplotlib.pyplot as plt
+import warnings
+import sklearn
 import json
+
 from shutil import copyfile
 from tqdm import tqdm
-import pickle
-import sklearn
-from sklearn.cluster import KMeans
-from strings import CLINICAL_LABELS, DATA_SETS
-import scipy.io as scio
 from scipy import stats
+from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics.cluster import contingency_matrix
+from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
+from sklearn.preprocessing import MinMaxScaler
+
+from strings import CLINICAL_LABELS, DATA_SETS
 
 
 def f_get_minibatch(mb_size, x, y):
@@ -520,7 +523,7 @@ def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag
 
 
 def save_record(main_path, index, distribution_string, judge, judge_params, comments, data_name, params=None):
-    with open(main_path + "record/{}/record.csv".format(data_name), "a") as f:
+    with open(main_path + "record/{}/record_{}.csv".format(data_name, data_name), "a") as f:
         f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},".format(
             index,
             judge,
@@ -574,7 +577,7 @@ def build_kmeans_result(main_path, kmeans_labels, data_name, k):
 
 
 def get_start_index(main_path, data_name):
-    df = pd.read_csv(main_path + "record/{}/record.csv".format(data_name))
+    df = pd.read_csv(main_path + "record/{}/record_{}.csv".format(data_name, data_name))
     # print(list(df["Id"]))
     start_index = max([int(item) for item in list(df["Id"])]) + 1
     # print(start_index)
@@ -622,8 +625,8 @@ def create_label_string(cluster_labels, const_cn_ad_labels, k):
 
 
 def initial_record(main_path, data_x_raw, data_name, seed_count, k):
-    if not os.path.exists(main_path + "record/{}/record.csv".format(data_name)):
-        copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record.csv".format(data_name))
+    if not os.path.exists(main_path + "record/{}/record_{}.csv".format(data_name, data_name)):
+        copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record_{}.csv".format(data_name, data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS] + [item + "_inter_count" for item in CLINICAL_LABELS]
         dic = dict()
         res_all = []
@@ -878,6 +881,16 @@ def build_data_x_y_gamma(main_path, max_length=9):
     df = df[pd.notnull(df["EcogPtMem"])]
     # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
     # df["PTID"] = [str(item) for item in df["PTID"]]
+    scores = df[target_labels]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    rescaledX = scaler.fit_transform(scores)
+    np.set_printoptions(precision=3)  # Setting precision for the output
+    scores = rescaledX
+    scores = pd.DataFrame(scores)
+    scores.columns = ["MMSE", "CDRSB", "ADAS13"]
+    for one_target_label in target_labels:
+        df[one_target_label] = scores[one_target_label]
+
     for one_label in target_labels:
         df[one_label] = fill_nan(df[one_label])
     pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
@@ -1001,6 +1014,16 @@ def build_data_x_y_delta(main_path, max_length=9):
     df = df[pd.notnull(df["EcogPtMem"])]
     # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
     # df["PTID"] = [str(item) for item in df["PTID"]]
+    scores = df[target_labels]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    rescaledX = scaler.fit_transform(scores)
+    np.set_printoptions(precision=3)  # Setting precision for the output
+    scores = rescaledX
+    scores = pd.DataFrame(scores)
+    scores.columns = ["MMSE", "CDRSB", "ADAS13"]
+    for one_target_label in target_labels:
+        df[one_target_label] = scores[one_target_label]
+
     for one_label in target_labels:
         df[one_label] = fill_nan(df[one_label])
     pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
@@ -1125,16 +1148,30 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
+    shutil.rmtree("test/todelete")
     # data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
     # draw_heat_map_2(data, data, "test/xx.png")
-    data = np.load("data/data_y/data_y_gamma.npy", allow_pickle=True)
-    print(data[0][0])
-
-    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta2_raw.npy")
-    # kmeans_labels = get_kmeans_base(data_x_raw, 0, 7)
-    # # label = np.load("test/labels_1.npy", allow_pickle=True)
+    # data = np.load("data/data_y/data_y_gamma.npy", allow_pickle=True)
+    # print(data[0][0])
+    # print(np.asarray([0,0,0,1959]).std())
+    # build_data_x_y_gamma(main_path)
+    # data_y = load_data(main_path, "/data/data_y/data_y_delta.npy")
+    # print(data_y[46][0])
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta1_raw.npy")
+    # data = []
+    # for item in data_x_raw:
+    #     for line in item:
+    #         data.append(line)
+    # data = np.asarray(data)
     #
-    # one_time_tsne_data_y(main_path, kmeans_labels, "delta2")
+    # print(data.shape)
+    # print(data[0])
+    # np.save("test/sustain_delta1.npy", data, allow_pickle=True)
+    # label = get_kmeans_base(data_x_raw, 0, 5)
+    # # label = np.load("test/labels_alpha2_k=5_2.npy", allow_pickle=True)
+    # # # one_time_heat_map_data_box(main_path, 6, label, "delta")
+    # #
+    # one_time_tsne_data_x(main_path, label, "alpha2")
     # one_time_deal_tsne(50)
     # one_time_draw_tsne()
     # with open("test/data.dat", "r") as f:
