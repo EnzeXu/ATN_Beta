@@ -96,18 +96,38 @@ def draw_320(data, k=5):
     plt.show()
 
 
-def draw_heat_map_2(data1, data2, save_path, s=2):
+def draw_heat_map_2(data1, data2, save_path, s=2, show_flag=False):
     pic_keys = ["var", "avg"]
+    color_dic = {
+        "var": plt.cm.hot,
+        "avg": plt.cm.cool
+    }
+    label_dic = {
+        "var": "variance",
+        "avg": "average"
+    }
     k = len(data1)
     for one_key in pic_keys:
         data1_tmp = [item.get(one_key) for item in copy.deepcopy(data1)]
         data2_tmp = [item.get(one_key) for item in copy.deepcopy(data2)]
         data_all = np.vstack((data1_tmp, data2_tmp))
         # print(data_all.shape)
-        data_all = np.abs((data_all - data_all.mean(axis=0)) / data_all.std(axis=0))
+        # print("1", data_all)
+        data_all_trans = data_all.swapaxes(0, 1)
+        new_lines = []
+        for line in data_all_trans:
+            new_lines.append(np.abs((line - np.nanmean(line)) / np.nanstd(line)))
+        data_all = np.asarray(new_lines).swapaxes(0, 1)
+        #data_all = np.abs((data_all - np.nanmean(data_all, axis=0) / np.nanstd(data_all, axis=0)))
+        # print("2", data_all.shape, data_all)
+
         data_all = data_all / s
         data1_normed = data_all[:len(data1)]
         data2_normed = data_all[-len(data2):]
+        data1_normed = np.nan_to_num(data1_normed, nan=10)
+        data2_normed = np.nan_to_num(data2_normed, nan=10)
+        # print("3", data1_normed)
+        # print("4", data2_normed)
         # data1 = np.asarray(data1)
         # data1_normed = np.abs((data1 - data1.mean(axis=0)) / data1.std(axis=0))
         # data1_normed = data1_normed / s
@@ -116,32 +136,210 @@ def draw_heat_map_2(data1, data2, save_path, s=2):
         # data2_normed = data2_normed / s
         xlabels = CLINICAL_LABELS
         ylabels = ["Subtype #{0}".format(i) for i in range(1, k + 1)]
-        fig = plt.figure(dpi=400, figsize=(21, 9))
+        fig = plt.figure(dpi=300, figsize=(21, 9))
         ax = fig.add_subplot(121)
         ax.set_title("k-means")
         ax.set_xticks(range(len(xlabels)))
         ax.set_xticklabels(xlabels, rotation=45)
         ax.set_yticks(range(len(ylabels)))
         ax.set_yticklabels(ylabels)
-        im = ax.imshow(data1_normed, cmap=plt.cm.hot, vmin=0, vmax=1)
+        im = ax.imshow(data1_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
         cb = plt.colorbar(im, shrink=0.4)
         cb.set_ticks([0, 1])
         cb.set_ticklabels(["Low", "High"])
-        cb.set_label("Intra-cluster variance", fontdict={"rotation": 270})
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
         ax = fig.add_subplot(122)
         ax.set_title("DPS-Net")
         ax.set_xticks(range(len(xlabels)))
         ax.set_xticklabels(xlabels, rotation=45)
         ax.set_yticks(range(len(ylabels)))
         ax.set_yticklabels(ylabels)
-        im = ax.imshow(data2_normed, cmap=plt.cm.hot, vmin=0, vmax=1)
+        im = ax.imshow(data2_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
         cb = plt.colorbar(im, shrink=0.4)
         cb.set_ticks([0, 1])
         cb.set_ticklabels(["Low", "High"])
-        cb.set_label("Intra-cluster variance", fontdict={"rotation": 270})
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
         plt.tight_layout()
-        plt.savefig("{}_{}.png".format(save_path, one_key), dpi=400)
-        # plt.show()
+        plt.savefig("{}_{}.png".format(save_path, one_key), dpi=300)
+        if show_flag:
+            plt.show()
+
+
+def draw_heat_map_3(data1, data2, data3, save_path, s=2, show_flag=False, filter_cols=14):
+    pic_keys = ["var", "avg"]
+    color_dic = {
+        "var": plt.cm.hot,
+        "avg": plt.cm.cool
+    }
+    label_dic = {
+        "var": "variance",
+        "avg": "average"
+    }
+    k = len(data1)
+    for one_key in pic_keys:
+        data1_tmp = [item.get(one_key) for item in copy.deepcopy(data1)]
+        data2_tmp = [item.get(one_key) for item in copy.deepcopy(data2)]
+        data3_tmp = [item.get(one_key) for item in copy.deepcopy(data3)]
+        data_all = np.vstack((data1_tmp, data2_tmp, data3_tmp))
+        data_all = data_all[:, -filter_cols:]
+        # print(data_all.shape)
+        # print("1", data_all)
+        data_all_trans = data_all.swapaxes(0, 1)
+        new_lines = []
+        for line in data_all_trans:
+            new_lines.append(np.abs((line - np.nanmean(line)) / np.nanstd(line)))
+        data_all = np.asarray(new_lines).swapaxes(0, 1)
+        #data_all = np.abs((data_all - np.nanmean(data_all, axis=0) / np.nanstd(data_all, axis=0)))
+        # print("2", data_all.shape, data_all)
+
+        data_all = data_all / s
+        data1_normed = data_all[: len(data1)]
+        data2_normed = data_all[len(data1): len(data1) + len(data2)]
+        data3_normed = data_all[len(data1) + len(data2):]
+
+        # data1_normed = np.nan_to_num(data1_normed, nan=10)
+        # data2_normed = np.nan_to_num(data2_normed, nan=10)
+
+        # print("3", data1_normed)
+        # print("4", data2_normed)
+        # data1 = np.asarray(data1)
+        # data1_normed = np.abs((data1 - data1.mean(axis=0)) / data1.std(axis=0))
+        # data1_normed = data1_normed / s
+        # data2 = np.asarray(data2)
+        # data2_normed = np.abs((data2 - data2.mean(axis=0)) / data2.std(axis=0))
+        # data2_normed = data2_normed / s
+        xlabels = CLINICAL_LABELS[-filter_cols:]
+        ylabels = ["Subtype #{0}".format(i) for i in range(1, k + 1)]
+        fig_size_dic = {
+            7: (16, 9),
+            14: (30, 9)
+        }
+        fig = plt.figure(dpi=300, figsize=fig_size_dic[filter_cols])
+        ax = fig.add_subplot(131)
+        ax.set_title("K-means")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data1_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        ax = fig.add_subplot(132)
+        ax.set_title("SuStaIn")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data2_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        ax = fig.add_subplot(133)
+        ax.set_title("DPS-Net")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data3_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        plt.tight_layout()
+        plt.savefig("{}_{}.png".format(save_path, one_key), dpi=300)
+        if show_flag:
+            plt.show()
+
+
+def draw_heat_map_4(data1, data2, data3, data4, save_path, s=2, show_flag=False):
+    pic_keys = ["var", "avg"]
+    color_dic = {
+        "var": plt.cm.hot,
+        "avg": plt.cm.cool
+    }
+    label_dic = {
+        "var": "variance",
+        "avg": "average"
+    }
+    k = len(data1)
+    for one_key in pic_keys:
+        data1_tmp = [item.get(one_key) for item in copy.deepcopy(data1)]
+        data2_tmp = [item.get(one_key) for item in copy.deepcopy(data2)]
+        data3_tmp = [item.get(one_key) for item in copy.deepcopy(data3)]
+        data4_tmp = [item.get(one_key) for item in copy.deepcopy(data4)]
+        data_all = np.vstack((data1_tmp, data2_tmp, data3_tmp, data4_tmp))
+        data_all_trans = data_all.swapaxes(0, 1)
+        new_lines = []
+        for line in data_all_trans:
+            new_lines.append(np.abs((line - np.nanmean(line)) / np.nanstd(line)))
+        data_all = np.asarray(new_lines).swapaxes(0, 1)
+        data_all = data_all / s
+        data1_normed = data_all[: len(data1)]
+        data2_normed = data_all[len(data1): len(data1) + len(data2)]
+        data3_normed = data_all[len(data1) + len(data2): len(data1) + len(data2) + len(data3)]
+        data4_normed = data_all[len(data1) + len(data2) + len(data3):]
+        xlabels = CLINICAL_LABELS
+        ylabels = ["Subtype #{0}".format(i) for i in range(1, k + 1)]
+        fig = plt.figure(dpi=300, figsize=(16, 9))
+
+        ax = fig.add_subplot(221)
+        ax.set_title("K-means")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data1_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        ax = fig.add_subplot(222)
+        ax.set_title("SuStaIn")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data2_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        ax = fig.add_subplot(223)
+        ax.set_title("DTC")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data3_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        ax = fig.add_subplot(224)
+        ax.set_title("DPS-Net")
+        ax.set_xticks(range(len(xlabels)))
+        ax.set_xticklabels(xlabels, rotation=45)
+        ax.set_yticks(range(len(ylabels)))
+        ax.set_yticklabels(ylabels)
+        im = ax.imshow(data4_normed, cmap=color_dic[one_key], vmin=0, vmax=1)
+        cb = plt.colorbar(im, shrink=0.4)
+        cb.set_ticks([0, 1])
+        cb.set_ticklabels(["Low", "High"])
+        cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
+
+        plt.tight_layout()
+        plt.savefig("{}_{}.png".format(save_path, one_key), dpi=300)
+        if show_flag:
+            plt.show()
 
 
 def draw_stairs(data1, data2, save_path, threshold=0.05):
@@ -279,7 +477,7 @@ def get_heat_map_data(main_path, K, label, data_type):
     return result
 
 
-def one_time_heat_map_data_box(main_path, K, label, data_type):
+def one_time_heat_map_data_box(main_path, label, data_type):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
 
@@ -303,7 +501,7 @@ def one_time_heat_map_data_box(main_path, K, label, data_type):
                 tmp_dic["clinical"] += [float(tmp_clinical)]
             output_dic["{}/{}".format(one_pt_id, one_exam_date)] = tmp_dic
     print(len(list(output_dic.keys())), output_dic.keys())
-    with open("test/box_data.pkl", "wb") as f:
+    with open("test/box_data_delta1_k=6_3000_7.pkl", "wb") as f:
         pickle.dump(output_dic, f)
     return
 
@@ -400,8 +598,6 @@ def one_time_draw_tsne():
     for i, point in enumerate(data):
         plt.scatter(point[0], point[1], s=5, c=color_types[colors[i]])
     plt.show()
-
-
 
 
 def get_heat_map_data_inter(main_path, K, label, data_type):
@@ -1143,12 +1339,173 @@ def build_data_x_y_delta(main_path, max_length=9):
     np.save(main_path + "data/data_x/data_x_delta4_raw.npy", data_x_delta4_raw, allow_pickle=True)
 
 
+def one_time_draw_4(main_path):
+    kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
+    sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
+    dtc_label = np.load("test/dtc_delta1_labels.npy", allow_pickle=True)
+    dps_label = np.load("test/dps_delta1_labels_2.npy", allow_pickle=True)
+    heat_map_data_kmeans = get_heat_map_data(main_path, 6, kmeans_label, "delta")
+    heat_map_data_sustain = get_heat_map_data(main_path, 6, sustain_label, "delta")
+    heat_map_data_dtc = get_heat_map_data(main_path, 6, dtc_label, "delta")
+    heat_map_data_dps = get_heat_map_data(main_path, 6, dps_label, "delta")
+    draw_heat_map_4(heat_map_data_kmeans, heat_map_data_sustain, heat_map_data_dtc, heat_map_data_dps, "test/comparison", 2, True)
+    return
+
+
+def one_time_draw_3(main_path):
+    kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
+    sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
+    dps_label = np.load("test/dps_delta1_labels_2.npy", allow_pickle=True)
+    heat_map_data_kmeans = get_heat_map_data(main_path, 6, kmeans_label, "delta")
+    heat_map_data_sustain = get_heat_map_data(main_path, 6, sustain_label, "delta")
+    heat_map_data_dps = get_heat_map_data(main_path, 6, dps_label, "delta")
+    draw_heat_map_3(heat_map_data_kmeans, heat_map_data_sustain, heat_map_data_dps, "test/comparison", 2, True)
+    return
+
+
+def parse_flatten(flatten_labels, data_type):
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    pt_dic = load_patient_dictionary(main_path, data_type)
+    normal_labels = []
+    index = 0
+    for j, one_pt_id in enumerate(pt_ids):
+        tmp_length = len(pt_dic.get(one_pt_id))
+        normal_labels.append(list([int(item) for item in flatten_labels[index: index + tmp_length]]))
+        index += tmp_length
+        # for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+    return normal_labels
+
+
+def one_time_label_trans(label, k=6):
+    trans_table = [[0] * k for i in range(k)]
+    count = [0] * k
+    count_clear = [0] * k
+    all_count = 0
+    for item in label:
+        length = len(item)
+        all_count += length - 1
+        for i in range(length - 1):
+            trans_table[item[i]][item[i + 1]] += 1
+        for i in range(length):
+            count[item[i]] += 1
+        for i in range(length - 1):
+            count_clear[item[i]] += 1
+    print("all_count =", all_count)
+    print(trans_table)
+    for i in range(k):
+        tmp_sum = sum(trans_table[i])
+        for j in range(k):
+            trans_table[i][j] /= tmp_sum
+    print(np.asarray(trans_table))
+    order_list = [[trans_table[i][i], i] for i in range(k)]
+    order_list.sort(key=lambda x: -x[0])
+    order = [item[1] for item in order_list]
+    trans_table_ordered = [[0] * k for i in range(k)]
+    for i in range(k):
+        for j in range(k):
+            trans_table_ordered[i][j] = trans_table[order[i]][order[j]]
+    print(np.asarray(trans_table_ordered))
+    for i in range(k):
+        for j in range(k):
+            print("{0:.6f}\t".format(trans_table_ordered[i][j]), end="")
+        print("{}({})".format(count[order[i]], count_clear[order[i]]), end="")
+        print()
+
+
+def one_time_label_trans_end_type(label, k=6):
+    trans_table = [[0] * (k + 1) for i in range(k)]
+    count = [0] * k
+    # count_clear = [0] * k
+    all_count = 0
+    for item in label:
+        length = len(item)
+        all_count += length - 1
+        for i in range(length - 1):
+            trans_table[item[i]][item[i + 1]] += 1
+        trans_table[item[length - 1]][k] += 1
+        for i in range(length):
+            count[item[i]] += 1
+        # for i in range(length - 1):
+        #     count_clear[item[i]] += 1
+    print("all_count =", all_count)
+    print(trans_table)
+    for i in range(k):
+        tmp_sum = sum(trans_table[i])
+        for j in range(k + 1):
+            trans_table[i][j] /= tmp_sum
+    print(np.asarray(trans_table))
+    # order_list = [[trans_table[i][i], i] for i in range(k)]
+    order_list = [[count[i], i] for i in range(k)]
+    order_list.sort(key=lambda x: -x[0])
+    order = [item[1] for item in order_list]
+    trans_table_ordered = [[0] * (k + 1) for i in range(k)]
+    for i in range(k):
+        for j in range(k):
+            trans_table_ordered[i][j] = trans_table[order[i]][order[j]]
+        trans_table_ordered[i][k] = trans_table[order[i]][k]
+    print(np.asarray(trans_table_ordered))
+    for i in range(k):
+        for j in range(k + 1):
+            print("{0:.6f}\t".format(trans_table_ordered[i][j]), end="")
+        print("{}".format(count[order[i]]), end="")
+        print()
+
+
+def one_time_draw_score():
+    plt.figure(dpi=400, figsize=(8, 6))
+    x = [3, 4, 5, 6, 7]
+    y = [19/5, 38/8, 69/9, 78/7, 20/4]
+    plt.plot(x, y, marker='s', markersize=5, linewidth=0.8, c="k", linestyle='dashed')
+    xlabels = ["3", "4", "5", "6", "7"]
+    # ylabels = ["Subtype #{0}".format(i) for i in range(1, 6)]
+    # plt.figure()
+    # plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
+    # plt.imshow(data_normed, interpolation='nearest', cmap=plt.cm.hot, vmin=0, vmax=1)
+    plt.title("Average times variances in DPS subtypes less than those of K-means")
+    plt.xticks(np.arange(3, 8, 1), xlabels)
+    plt.ylim(0, 14)
+    plt.xlabel("K")
+    plt.ylabel("Times")
+    for i in range(len(x)):
+        plt.annotate("%.2f" % y[i], xy=(x[i], y[i]), xytext=(x[i] - 0.1, y[i] + 0.3))
+    plt.show()
+
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    shutil.rmtree("test/todelete")
+    # one_time_draw_score()
+    # for i in range(11, 33):
+    #     path = "test/sustain/delta1_final_{}.npy".format(i)
+    #     flatten_label = np.load(path)
+    #     print(path, [list(flatten_label).count(item) for item in range(6)])
+    # 14, 16, 28, 30
+    flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    sustain_label = parse_flatten(flatten_label, "delta")
+    # np.save("test/sustain_delta1_labels_2.npy", normal_label, allow_pickle=True)
+    # print(normal_label)
+    kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
+    # sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
+    # dtc_label = np.load("test/dtc_delta1_labels.npy", allow_pickle=True)
+    dps_label = np.load("test/dps_delta1_labels_2.npy", allow_pickle=True)
+    # one_time_label_trans_end_type(dps_label, 6)
+    # one_time_heat_map_data_box(main_path, dps_label, "delta")
+    # one_time_heat_map_data_box(main_path, dps_label, "delta")
+    heat_map_data_kmeans = get_heat_map_data(main_path, 6, kmeans_label, "delta")
+    heat_map_data_sustain = get_heat_map_data(main_path, 6, sustain_label, "delta")
+    # heat_map_data_dtc = get_heat_map_data(main_path, 6, dtc_label, "delta")
+    heat_map_data_dps = get_heat_map_data(main_path, 6, dps_label, "delta")
+    draw_heat_map_3(heat_map_data_kmeans, heat_map_data_sustain, heat_map_data_dps, "test/comparison", 2, True, 14)
+
+    # draw_320(normal_label, 6)
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta1_raw.npy")
+    # kmeans_label = get_kmeans_base(data_x_raw, 0, 6)
+    # np.save("test/kmeans_delta1_labels.npy", kmeans_label, allow_pickle=True)
+    # draw_320(dps_label)
+    # one_time_draw_3(main_path)
+    # shutil.rmtree("test/todelete")
     # data = np.load("data/initial/alpha1/base_res.npy", allow_pickle=True)
     # draw_heat_map_2(data, data, "test/xx.png")
     # data = np.load("data/data_y/data_y_gamma.npy", allow_pickle=True)
@@ -1167,7 +1524,7 @@ if __name__ == "__main__":
     # print(data.shape)
     # print(data[0])
     # np.save("test/sustain_delta1.npy", data, allow_pickle=True)
-    # label = get_kmeans_base(data_x_raw, 0, 5)
+
     # # label = np.load("test/labels_alpha2_k=5_2.npy", allow_pickle=True)
     # # # one_time_heat_map_data_box(main_path, 6, label, "delta")
     # #
