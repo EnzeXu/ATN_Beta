@@ -1,39 +1,11 @@
-import warnings
-warnings.filterwarnings("ignore")
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
-import numpy as np
-import pandas as pd
-from pandas.plotting import parallel_coordinates
-import matplotlib.pyplot as plt
-import tensorflow as tf
-import networkx as nx
-from networkx import DiGraph
-from networkx.algorithms import centrality, cluster
-
-import random
-import os
-import sys
-import math
-import platform
 import argparse
-from tensorflow.python.ops.rnn import _transpose_batch_time
+import tensorflow as tf
+
 from sklearn.model_selection import train_test_split
-
-from sklearn.metrics import roc_auc_score, average_precision_score
-from sklearn.metrics import normalized_mutual_info_score, homogeneity_score, adjusted_rand_score
-from sklearn.metrics.cluster import contingency_matrix
-
-import scipy.stats as stats
-from scipy.stats import chisquare
-import statistics
-
 from utils_log import save_logging, load_logging
-from data_loader import import_data
 from class_AC_TPC import AC_TPC, initialize_embedding
-import time
 from tools import *
+from box_adjusted import draw_boxplt
 
 
 def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, base_res_inter, print_flag=True):
@@ -330,13 +302,20 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         f.write(string)
     # print(output_labels)
     heat_map_data = get_heat_map_data(main_path, int(opt.k), output_labels, opt.data[:-1])
-    # print("\noutput_labels in train:")
-    # print(output_labels)
-    # with open("test_output_labels", "wb") as f:
-    #     pickle.dump(output_labels, f)
     _, heat_map_data_inter = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1])
-    draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count))
-    draw_stairs(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
+    sustain_intra = get_static_sustain(main_path, "intra")
+    sustain_inter = get_static_sustain(main_path, "inter")
+
+    # draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count))
+    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count), 2, False)
+
+    # draw_stairs_2(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
+    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
+
+    box_data_save_path = "saves/{}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, times_count, opt.data, opt.k, times_count)
+    box_data_dist_save_path = "saves/{}/{}/dist/".format(opt.data, times_count)
+    make_heat_map_data_box(main_path, box_data_save_path, output_labels, opt.data[:-1])
+    draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, opt.k, times_count)
     # print(heat_map_data)
     print("heat_map_data_inter in train:")
     print(heat_map_data_inter)
@@ -369,8 +348,6 @@ def start(params, opt):
 
 
 if __name__ == "__main__":
-    warnings.filterwarnings("ignore")
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
     parser = argparse.ArgumentParser()
     parser.add_argument("--num", default=500, help="number of training")
     parser.add_argument("--comment", default="", help="any comment")

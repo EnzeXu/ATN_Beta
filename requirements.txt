@@ -8,3 +8,5 @@ openpyxl
 tqdm
 sklearn
 scipy
+seaborn
+statannot

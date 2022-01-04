@@ -342,7 +342,7 @@ def draw_heat_map_4(data1, data2, data3, data4, save_path, s=2, show_flag=False)
             plt.show()
 
 
-def draw_stairs(data1, data2, save_path, threshold=0.05):
+def draw_stairs_2(data1, data2, save_path, threshold=0.05):
     # print("in draw_stairs:")
     # print("data1:")
     # print(data1)
@@ -369,7 +369,7 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
         fig = plt.figure(dpi=400, figsize=(7, 3))
 
         ax = fig.add_subplot(121)
-        ax.set_title("k-means")
+        ax.set_title("K-means")
         ax.set_xticks(np.arange(0, k - 1, 1))
         ax.set_xticklabels(xlabels)
         ax.set_yticks(np.arange(0, k - 1, 1))
@@ -421,6 +421,87 @@ def draw_stairs(data1, data2, save_path, threshold=0.05):
         plt.tight_layout()
         plt.savefig("{}_{}.png".format(save_path, one_target), dpi=400)
         # plt.show()
+
+
+def draw_stairs_3(data1, data2, data3, save_path, threshold=0.05):
+    k = len(data1)
+    for i, one_target in enumerate(CLINICAL_LABELS):
+        k1 = np.asarray(copy.deepcopy(data1[i]))
+        k2 = np.asarray(copy.deepcopy(data2[i]))
+        k3 = np.asarray(copy.deepcopy(data3[i]))
+        print(k1.shape, k2.shape, k3.shape)
+        for j in range(len(k1)):
+            for l in range(len(k1[j])):
+                if k1[j][l] <= threshold:
+                    k1[j][l] = 1
+                else:
+                    k1[j][l] = np.nan
+        for j in range(len(k2)):
+            for l in range(len(k2[j])):
+                if k2[j][l] <= threshold:
+                    k2[j][l] = 1
+                else:
+                    k2[j][l] = np.nan
+        for j in range(len(k3)):
+            for l in range(len(k3[j])):
+                if k3[j][l] <= threshold:
+                    k3[j][l] = 1
+                else:
+                    k3[j][l] = np.nan
+
+        ylabels = range(2, k + 1)  # [2, 3, 4, 5]
+        xlabels = range(1, k)  # [1, 2, 3, 4]
+        v_lines = [[-0.5, -0.5, k - 1.5]] + [[0.5 + i, -0.5 + i, k - 1.5] for i in range(k - 2)] + [[k - 1.505, k - 2.5, k - 1.5]]
+        h_lines = [[-0.495, -0.5, 0.5]] + [[0.5 + i, -0.5, 1.5 + i] for i in range(k - 2)] + [[k - 1.5, -0.5, k - 1.5]]
+        fig = plt.figure(dpi=300, figsize=(10, 3))
+
+        ax = fig.add_subplot(131)
+        ax.set_title("K-means")
+        ax.set_xticks(np.arange(0, k - 1, 1))
+        ax.set_xticklabels(xlabels)
+        ax.set_yticks(np.arange(0, k - 1, 1))
+        ax.set_yticklabels(ylabels)
+        for seat in ["left", "right", "top", "bottom"]:
+            ax.spines[seat].set_visible(False)
+        for one_line in v_lines:
+            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        for one_line in h_lines:
+            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        ax.imshow(k1, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+
+        ax = fig.add_subplot(132)
+        ax.set_title("SuStaIn")
+        ax.set_xticks(np.arange(0, k - 1, 1))
+        ax.set_xticklabels(xlabels)
+        ax.set_yticks(np.arange(0, k - 1, 1))
+        ax.set_yticklabels(ylabels)
+        for seat in ["left", "right", "top", "bottom"]:
+            ax.spines[seat].set_visible(False)
+        for one_line in v_lines:
+            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        for one_line in h_lines:
+            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        ax.imshow(k2, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+
+        ax = fig.add_subplot(133)
+        ax.set_title("DPS-Net")
+        ax.set_xticks(np.arange(0, k - 1, 1))
+        ax.set_xticklabels(xlabels)
+        ax.set_yticks(np.arange(0, k - 1, 1))
+        ax.set_yticklabels(ylabels)
+        for seat in ["left", "right", "top", "bottom"]:
+            ax.spines[seat].set_visible(False)
+        for one_line in v_lines:
+            ax.vlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        for one_line in h_lines:
+            ax.hlines(one_line[0], one_line[1], one_line[2], colors="black", linestyle="dotted", linewidth=1)
+        ax.imshow(k3, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
+
+        plt.suptitle("Inter-cluster difference [{}]".format(one_target))
+        plt.tight_layout()
+        plt.savefig("{}_{}.png".format(save_path, one_target), dpi=400)
+        # plt.show()
+        # break
 
 
 def get_engine():
@@ -477,20 +558,16 @@ def get_heat_map_data(main_path, K, label, data_type):
     return result
 
 
-def one_time_heat_map_data_box(main_path, label, data_type):
+def make_heat_map_data_box(main_path, save_path, label, data_type):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
-
     data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
     target_labels = CLINICAL_LABELS
     data = data[["PTID", "EXAMDATE"] + target_labels]
     data = data[pd.notnull(data["EcogPtMem"])]
-
     for one_label in target_labels:
         data[one_label] = fill_nan(data[one_label])
-
     output_dic = dict()
-
     for i, one_pt_id in enumerate(pt_ids):
         for j, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
             tmp_dic = dict()
@@ -501,7 +578,7 @@ def one_time_heat_map_data_box(main_path, label, data_type):
                 tmp_dic["clinical"] += [float(tmp_clinical)]
             output_dic["{}/{}".format(one_pt_id, one_exam_date)] = tmp_dic
     print(len(list(output_dic.keys())), output_dic.keys())
-    with open("test/box_data_delta1_k=6_3000_7.pkl", "wb") as f:
+    with open(save_path, "wb") as f:
         pickle.dump(output_dic, f)
     return
 
@@ -848,7 +925,7 @@ def initial_record(main_path, data_x_raw, data_name, seed_count, k):
             return dic, res_all[0], res_all_inter[0]
         else:
             empty = [[[0] * 14] for i in range(k)]
-            empty_inter = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (K - 1) ** 2)).reshape((len(CLINICAL_LABELS), k - 1, k - 1))
+            empty_inter = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (k - 1) ** 2)).reshape((len(CLINICAL_LABELS), k - 1, k - 1))
             np.save("data/initial/{}/base_res.npy".format(data_name), empty, allow_pickle=True)
             np.save("data/initial/{}/base_res_inter.npy".format(data_name), empty_inter, allow_pickle=True)
             return dic, empty, empty_inter
@@ -1010,7 +1087,7 @@ def create_empty_folders_all(main_path):
 
 
 def create_empty_folders(main_path, data_name):
-    locations = ["record/", "data/initial/", "saves/"]
+    locations = ["record/", "data/initial/", "saves/", "saves/dist/"]
     for one_location in locations:
         tmp_dir = main_path + one_location + data_name
         if not os.path.exists(tmp_dir):
@@ -1378,6 +1455,7 @@ def parse_flatten(flatten_labels, data_type):
 
 def one_time_label_trans(label, k=6):
     trans_table = [[0] * k for i in range(k)]
+    trans_table_string = [[""] * (k + 1) for i in range(k)]
     count = [0] * k
     count_clear = [0] * k
     all_count = 0
@@ -1395,25 +1473,26 @@ def one_time_label_trans(label, k=6):
     for i in range(k):
         tmp_sum = sum(trans_table[i])
         for j in range(k):
-            trans_table[i][j] /= tmp_sum
-    print(np.asarray(trans_table))
+            trans_table_string[i][j] = "{0}({1:.1f}%)".format(trans_table[i][j], 100 * trans_table[i][j] / tmp_sum)
+    # print(np.asarray(trans_table))
     order_list = [[trans_table[i][i], i] for i in range(k)]
     order_list.sort(key=lambda x: -x[0])
     order = [item[1] for item in order_list]
-    trans_table_ordered = [[0] * k for i in range(k)]
+    trans_table_ordered = [[""] * k for i in range(k)]
     for i in range(k):
         for j in range(k):
-            trans_table_ordered[i][j] = trans_table[order[i]][order[j]]
-    print(np.asarray(trans_table_ordered))
+            trans_table_ordered[i][j] = trans_table_string[order[i]][order[j]]
+    # print(np.asarray(trans_table_ordered))
     for i in range(k):
         for j in range(k):
-            print("{0:.6f}\t".format(trans_table_ordered[i][j]), end="")
-        print("{}({})".format(count[order[i]], count_clear[order[i]]), end="")
+            print("{0}\t".format(trans_table_ordered[i][j]), end="")
+        print("{}(100.0%)\t{}".format(count_clear[order[i]], count[order[i]]), end="")
         print()
 
 
 def one_time_label_trans_end_type(label, k=6):
     trans_table = [[0] * (k + 1) for i in range(k)]
+    trans_table_string = [[""] * (k + 1) for i in range(k)]
     count = [0] * k
     # count_clear = [0] * k
     all_count = 0
@@ -1432,21 +1511,21 @@ def one_time_label_trans_end_type(label, k=6):
     for i in range(k):
         tmp_sum = sum(trans_table[i])
         for j in range(k + 1):
-            trans_table[i][j] /= tmp_sum
-    print(np.asarray(trans_table))
+            trans_table_string[i][j] = "{0}({1:.1f}%)".format(trans_table[i][j], 100 * trans_table[i][j] / tmp_sum)
+    # print(np.asarray(trans_table))
     # order_list = [[trans_table[i][i], i] for i in range(k)]
     order_list = [[count[i], i] for i in range(k)]
     order_list.sort(key=lambda x: -x[0])
     order = [item[1] for item in order_list]
-    trans_table_ordered = [[0] * (k + 1) for i in range(k)]
+    trans_table_string_ordered = [[""] * (k + 1) for i in range(k)]
     for i in range(k):
         for j in range(k):
-            trans_table_ordered[i][j] = trans_table[order[i]][order[j]]
-        trans_table_ordered[i][k] = trans_table[order[i]][k]
-    print(np.asarray(trans_table_ordered))
+            trans_table_string_ordered[i][j] = trans_table_string[order[i]][order[j]]
+        trans_table_string_ordered[i][k] = trans_table_string[order[i]][k]
+    # print(np.asarray(trans_table_ordered))
     for i in range(k):
         for j in range(k + 1):
-            print("{0:.6f}\t".format(trans_table_ordered[i][j]), end="")
+            print("{}\t".format(trans_table_string_ordered[i][j]), end="")
         print("{}".format(count[order[i]]), end="")
         print()
 
@@ -1471,33 +1550,67 @@ def one_time_draw_score():
     plt.show()
 
 
+def one_time_draw_3_stairs(main_path):
+    kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
+    flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    sustain_label = parse_flatten(flatten_label, "delta")
+    # sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
+    dps_label = np.load("test/dps_delta1_labels_2.npy", allow_pickle=True)
+    _, stairs_data_kmeans = get_heat_map_data_inter(main_path, 6, kmeans_label, "delta")
+    _, stairs_data_sustain = get_heat_map_data_inter(main_path, 6, sustain_label, "delta")
+    _, stairs_data_dps = get_heat_map_data_inter(main_path, 6, dps_label, "delta")
+    draw_stairs_3(stairs_data_kmeans, stairs_data_sustain, stairs_data_dps, "test/final_inter/inter")
+    return
+
+
+def get_static_sustain(main_path, item_name):
+    if item_name == "label":
+        return np.load(main_path + "data/sustain/delta1_final_16_labels.npy", allow_pickle=True)
+    if item_name == "intra":
+        return np.load(main_path + "data/sustain/delta1_final_16_intra.npy", allow_pickle=True)
+    if item_name == "inter":
+        return np.load(main_path + "data/sustain/delta1_final_16_inter.npy", allow_pickle=True)
+
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
+    #dps_label = np.load("test/for_hist/labels_19.npy", allow_pickle=True)
+    flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    sustain_label = parse_flatten(flatten_label, "delta")
+    np.save("data/sustain/delta1_final_16_labels.npy", sustain_label, allow_pickle=True)
+    heat_map = get_heat_map_data(main_path, 6, sustain_label, "delta")
+    _, heat_map_inter = get_heat_map_data_inter(main_path, 6, sustain_label, "delta")
+    np.save("data/sustain/delta1_final_16_intra.npy", heat_map, allow_pickle=True)
+    np.save("data/sustain/delta1_final_16_inter.npy", heat_map_inter, allow_pickle=True)
+    # one_time_label_trans(dps_label)
+    # one_time_heat_map_data_box(main_path, "test/for_hist/box_data_delta1_k=6_3000_19.pkl", dps_label, "delta")
+    # one_time_draw_3_stairs(main_path)
     # one_time_draw_score()
     # for i in range(11, 33):
     #     path = "test/sustain/delta1_final_{}.npy".format(i)
     #     flatten_label = np.load(path)
     #     print(path, [list(flatten_label).count(item) for item in range(6)])
     # 14, 16, 28, 30
-    flatten_label = np.load("test/sustain/delta1_final_16.npy")
-    sustain_label = parse_flatten(flatten_label, "delta")
-    # np.save("test/sustain_delta1_labels_2.npy", normal_label, allow_pickle=True)
-    # print(normal_label)
-    kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
-    # sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
-    # dtc_label = np.load("test/dtc_delta1_labels.npy", allow_pickle=True)
-    dps_label = np.load("test/dps_delta1_labels_2.npy", allow_pickle=True)
-    # one_time_label_trans_end_type(dps_label, 6)
-    # one_time_heat_map_data_box(main_path, dps_label, "delta")
-    # one_time_heat_map_data_box(main_path, dps_label, "delta")
-    heat_map_data_kmeans = get_heat_map_data(main_path, 6, kmeans_label, "delta")
-    heat_map_data_sustain = get_heat_map_data(main_path, 6, sustain_label, "delta")
-    # heat_map_data_dtc = get_heat_map_data(main_path, 6, dtc_label, "delta")
-    heat_map_data_dps = get_heat_map_data(main_path, 6, dps_label, "delta")
-    draw_heat_map_3(heat_map_data_kmeans, heat_map_data_sustain, heat_map_data_dps, "test/comparison", 2, True, 14)
+    # flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    # sustain_label = parse_flatten(flatten_label, "delta")
+    # # np.save("test/sustain_delta1_labels_2.npy", normal_label, allow_pickle=True)
+    # # print(normal_label)
+    # kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
+    # # sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
+    # # dtc_label = np.load("test/dtc_delta1_labels.npy", allow_pickle=True)
+    # dps_label = np.load("test/dps_delta1_labels_2.npy", allow_pickle=True)
+    # draw_320(dps_label, 6)
+    # # one_time_label_trans_end_type(dps_label, 6)
+    # # one_time_heat_map_data_box(main_path, dps_label, "delta")
+    # # one_time_heat_map_data_box(main_path, dps_label, "delta")
+    # heat_map_data_kmeans = get_heat_map_data(main_path, 6, kmeans_label, "delta")
+    # heat_map_data_sustain = get_heat_map_data(main_path, 6, sustain_label, "delta")
+    # # heat_map_data_dtc = get_heat_map_data(main_path, 6, dtc_label, "delta")
+    # heat_map_data_dps = get_heat_map_data(main_path, 6, dps_label, "delta")
+    # draw_heat_map_3(heat_map_data_kmeans, heat_map_data_sustain, heat_map_data_dps, "test/comparison", 2, True, 14)
 
     # draw_320(normal_label, 6)
     # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta1_raw.npy")
