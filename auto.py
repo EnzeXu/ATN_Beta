@@ -1,6 +1,7 @@
 import argparse
 import tensorflow as tf
 
+
 from sklearn.model_selection import train_test_split
 from utils_log import save_logging, load_logging
 from class_AC_TPC import AC_TPC, initialize_embedding
@@ -305,24 +306,32 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     _, heat_map_data_inter = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1])
     sustain_intra = get_static_sustain(main_path, "intra")
     sustain_inter = get_static_sustain(main_path, "inter")
+    print("Heat map data are built (1/5)")
 
     # draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count))
     draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count), 2, False)
+    print("Intra built (2/5)")
 
     # draw_stairs_2(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
     draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
+    print("Inter built (3/5)")
 
     box_data_save_path = "saves/{}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, times_count, opt.data, opt.k, times_count)
     box_data_dist_save_path = "saves/{}/{}/dist/".format(opt.data, times_count)
+    if not os.path.exists(main_path + box_data_dist_save_path):
+        os.makedirs(main_path + box_data_dist_save_path)
+
     make_heat_map_data_box(main_path, box_data_save_path, output_labels, opt.data[:-1])
     draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, opt.k, times_count)
-    # print(heat_map_data)
-    print("heat_map_data_inter in train:")
-    print(heat_map_data_inter)
+    print("Hist built (4/5)")
+
+    # print("heat_map_data_inter in train:")
+    # print(heat_map_data_inter)
     judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic, int(opt.k))
+
     if int(opt.clear) == 1:
         shutil.rmtree("saves/{}/{}/proposed".format(opt.data, times_count))
-        print("Removed folder {} after training".format("saves/{}/{}/proposed".format(opt.data, times_count)))
+        print("Removed folder {} after training (5/5)".format("saves/{}/{}/proposed".format(opt.data, times_count)))
     return judge, judge_params, distribution_string
 
 
@@ -348,6 +357,7 @@ def start(params, opt):
 
 
 if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
     parser = argparse.ArgumentParser()
     parser.add_argument("--num", default=500, help="number of training")
     parser.add_argument("--comment", default="", help="any comment")

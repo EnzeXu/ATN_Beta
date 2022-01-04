@@ -429,7 +429,7 @@ def draw_stairs_3(data1, data2, data3, save_path, threshold=0.05):
         k1 = np.asarray(copy.deepcopy(data1[i]))
         k2 = np.asarray(copy.deepcopy(data2[i]))
         k3 = np.asarray(copy.deepcopy(data3[i]))
-        print(k1.shape, k2.shape, k3.shape)
+        # print(k1.shape, k2.shape, k3.shape)
         for j in range(len(k1)):
             for l in range(len(k1[j])):
                 if k1[j][l] <= threshold:
@@ -577,7 +577,7 @@ def make_heat_map_data_box(main_path, save_path, label, data_type):
                 tmp_clinical = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]
                 tmp_dic["clinical"] += [float(tmp_clinical)]
             output_dic["{}/{}".format(one_pt_id, one_exam_date)] = tmp_dic
-    print(len(list(output_dic.keys())), output_dic.keys())
+    # print(len(list(output_dic.keys())), output_dic.keys())
     with open(save_path, "wb") as f:
         pickle.dump(output_dic, f)
     return
@@ -1087,7 +1087,7 @@ def create_empty_folders_all(main_path):
 
 
 def create_empty_folders(main_path, data_name):
-    locations = ["record/", "data/initial/", "saves/", "saves/dist/"]
+    locations = ["record/", "data/initial/", "saves/"]
     for one_location in locations:
         tmp_dir = main_path + one_location + data_name
         if not os.path.exists(tmp_dir):
