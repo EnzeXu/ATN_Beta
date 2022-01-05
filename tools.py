@@ -165,7 +165,7 @@ def draw_heat_map_2(data1, data2, save_path, s=2, show_flag=False):
             plt.show()
 
 
-def draw_heat_map_3(data1, data2, data3, save_path, s=2, show_flag=False, filter_cols=14):
+def draw_heat_map_3(data1, data2, data3, save_path, s=2, show_flag=False, filter_cols=7):
     pic_keys = ["var", "avg"]
     color_dic = {
         "var": plt.cm.hot,
@@ -738,8 +738,8 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
 
 def count_inter(data_inter, threshold=0.05):
     dic = dict()
-    print("heat_map_data_inter in count_inter:")
-    print(data_inter)
+    # print("heat_map_data_inter in count_inter:")
+    # print(data_inter)
     for i, one_target in enumerate(CLINICAL_LABELS):
         dic[one_target + "_inter_count"] = 0
         for j in range(len(data_inter[i])):
@@ -1416,6 +1416,142 @@ def build_data_x_y_delta(main_path, max_length=9):
     np.save(main_path + "data/data_x/data_x_delta4_raw.npy", data_x_delta4_raw, allow_pickle=True)
 
 
+def build_data_x_y_epsilon(main_path, max_length=9):
+    df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
+    target_labels = ["ADAS13"]
+    df = df[["PTID", "EXAMDATE"] + target_labels + ["EcogPtMem"]]
+    df = df[pd.notnull(df["EcogPtMem"])]
+    # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
+    # df["PTID"] = [str(item) for item in df["PTID"]]
+    scores = df[target_labels]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    rescaledX = scaler.fit_transform(scores)
+    np.set_printoptions(precision=3)  # Setting precision for the output
+    scores = rescaledX
+    scores = pd.DataFrame(scores)
+    scores.columns = ["ADAS13"]
+    for one_target_label in target_labels:
+        df[one_target_label] = scores[one_target_label]
+
+    for one_label in target_labels:
+        df[one_label] = fill_nan(df[one_label])
+    pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
+    dic_date = dict()
+
+    dic_y = dict()
+    for index, row in df.iterrows():
+        pt_id = row.get("PTID")
+        if pt_id in pt_ids:
+            if pt_id not in dic_date:
+                dic_date[pt_id] = [row.get("EXAMDATE")]
+            else:
+                dic_date[pt_id].append(row.get("EXAMDATE"))
+            if pt_id not in dic_y:
+                dic_y[pt_id] = [[row.get(one_target) for one_target in target_labels]]
+            else:
+                dic_y[pt_id].append([row.get(one_target) for one_target in target_labels])
+    with open(main_path + "data/patient_dictionary_epsilon.pkl", "wb") as f:
+        pickle.dump(dic_date, f)
+    tmp_max = -1
+    empty_count = 0
+    data_y = []
+    for pt_id in pt_ids:
+        tmp_max = max(tmp_max, len(dic_y.get(pt_id)))
+        tmp_y = dic_y.get(pt_id)
+        empty_count += (max_length - len(tmp_y))
+        if len(tmp_y) == 1:
+            tmp_y.append(tmp_y[0])
+        if len(tmp_y) < max_length:
+            tmp_y += [[0] * len(target_labels) for i in range(max_length - len(tmp_y))]
+        data_y.append(tmp_y)
+    data_y = np.asarray(data_y)
+    data_y = np.reshape(data_y, (len(pt_ids), max_length, len(target_labels)))
+    print("tmp_max:", tmp_max)
+    print("empty_count: {} / ({} * {}) = {}".format(empty_count, len(pt_ids), max_length, empty_count / (len(pt_ids) * max_length)))
+    np.save(main_path + "data/data_y/data_y_epsilon.npy", data_y, allow_pickle=True)
+
+    data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
+    # data_x = np.asarray([item[0: 500] for item in data_x])
+    data_network = scio.loadmat(main_path + "data/network_centrality.mat")
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
+    data_x_beta1 = data_x
+    data_x_beta2 = []
+    data_x_beta3 = []
+    data_x_beta4 = []
+    for i in range(len(data_x)):
+        data_x_beta2.append([np.concatenate((data_x[i][j], laplacian), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta3.append([np.concatenate((data_x[i][j], degree), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta4.append([np.concatenate((data_x[i][j], betweenness, closeness, degree, pagerank, laplacian), axis=0) for j in range(len(data_x[0]))])
+    data_x_beta2 = np.asarray(data_x_beta2)
+    data_x_beta3 = np.asarray(data_x_beta3)
+    data_x_beta4 = np.asarray(data_x_beta4)
+
+    dic_x_index = dict()
+    data_x_epsilon1 = []
+    data_x_epsilon2 = []
+    data_x_epsilon3 = []
+    data_x_epsilon4 = []
+    data_x_epsilon1_raw = []
+    data_x_epsilon2_raw = []
+    data_x_epsilon3_raw = []
+    data_x_epsilon4_raw = []
+    for i, pt_id in enumerate(pt_ids):
+        dic_x_index[pt_id] = split_periods_delta(dic_date[pt_id])
+
+        # print(dic_x_index[pt_id])
+        # epsilon1
+        data_x_epsilon1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
+        data_x_epsilon1_raw.append([list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_epsilon1_tmp) < max_length:
+            data_x_epsilon1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_epsilon1_tmp))]
+        data_x_epsilon1.append(data_x_epsilon1_tmp)
+
+        # epsilon2
+        data_x_epsilon2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
+        data_x_epsilon2_raw.append([list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_epsilon2_tmp) < max_length:
+            data_x_epsilon2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_epsilon2_tmp))]
+        data_x_epsilon2.append(data_x_epsilon2_tmp)
+
+        # epsilon3
+        data_x_epsilon3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
+        data_x_epsilon3_raw.append([list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_epsilon3_tmp) < max_length:
+            data_x_epsilon3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_epsilon3_tmp))]
+        data_x_epsilon3.append(data_x_epsilon3_tmp)
+
+        # epsilon4
+        data_x_epsilon4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
+        data_x_epsilon4_raw.append([list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_epsilon4_tmp) < max_length:
+            data_x_epsilon4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_epsilon4_tmp))]
+        data_x_epsilon4.append(data_x_epsilon4_tmp)
+
+    print(dic_x_index)
+
+    data_x_epsilon1 = np.asarray(data_x_epsilon1)
+    data_x_epsilon2 = np.asarray(data_x_epsilon2)
+    data_x_epsilon3 = np.asarray(data_x_epsilon3)
+    data_x_epsilon4 = np.asarray(data_x_epsilon4)
+
+    print(data_x_epsilon1.shape)
+    print(data_x_epsilon2.shape)
+    print(data_x_epsilon3.shape)
+    print(data_x_epsilon4.shape)
+    np.save(main_path + "data/data_x/data_x_epsilon1.npy", data_x_epsilon1, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon2.npy", data_x_epsilon2, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon3.npy", data_x_epsilon3, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon4.npy", data_x_epsilon4, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon1_raw.npy", data_x_epsilon1_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon2_raw.npy", data_x_epsilon2_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon3_raw.npy", data_x_epsilon3_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_epsilon4_raw.npy", data_x_epsilon4_raw, allow_pickle=True)
+
+
 def one_time_draw_4(main_path):
     kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
     sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
@@ -1572,19 +1708,163 @@ def get_static_sustain(main_path, item_name):
         return np.load(main_path + "data/sustain/delta1_final_16_inter.npy", allow_pickle=True)
 
 
+def coordinate(node1, node2, node3, node4):
+    x1, y1 = node1[0], node1[1]
+    x2, y2 = node2[0], node2[1]
+    x3, y3 = node3[0], node3[1]
+    x4, y4 = node4[0], node4[1]
+    if x1 == x2 and x3 == x4:
+        print("Error in coordinate (cover):", node1, node2, node3, node4)
+        return [np.nan, np.nan]
+    if y1 == y2 and y3 == y4:
+        print("Error in coordinate (cover):", node1, node2, node3, node4)
+        return [np.nan, np.nan]
+    if x1 == x2:
+        return [x1, (x4*y3-x3*y4-x1*y3+x1*y4)/(x4-x3)]
+    if x3 == x4:
+        return [x3, (x2*y1-x1*y2-x3*y1+x3*y2)/(x2-x1)]
+    if y1 == y2:
+        return [(y4*x3-y3*x4-y1*x3+y1*x4)/(y4-y3), y1]
+    if y3 == y4:
+        return [(y2*x1-y1*x2-y3*x1+y3*x2)/(y2-y1), y3]
+    if (y1-y2)*(x4-x3) == (y3-y4)*(x2-x1):
+        print("Error in coordinate (parallel):", node1, node2, node3, node4)
+        return [np.nan, np.nan]
+    else:
+        a = ((x2*y1-x1*y2)*(x4-x3)-(x4*y3-x3*y4)*(x2-x1))/((y1-y2)*(x4-x3)-(y3-y4)*(x2-x1))
+        b = (x2*y1-x1*y2-(y1-y2)*a)/(x2-x1)
+        return [a, b]
+
+
+def triangle_crd(nodes, one_label):
+    rate01 = one_label[1] / (one_label[0] + one_label[1]) if one_label[0] + one_label[1] != 0 else 0.5
+    # rate12 = one_label[2] / (one_label[1] + one_label[2]) if one_label[1] + one_label[2] != 0 else 0.5
+    rate20 = one_label[0] / (one_label[2] + one_label[0]) if one_label[2] + one_label[0] != 0 else 0.5
+    # print(rate01, rate12, rate20)
+    m01 = [nodes[0][0] + rate01 * (nodes[1][0] - nodes[0][0]), nodes[0][1] + rate01 * (nodes[1][1] - nodes[0][1])]
+    # m12 = [nodes[1][0] + rate12 * (nodes[2][0] - nodes[1][0]), nodes[1][1] + rate12 * (nodes[2][1] - nodes[1][1])]
+    m20 = [nodes[2][0] + rate20 * (nodes[0][0] - nodes[2][0]), nodes[2][1] + rate20 * (nodes[0][1] - nodes[2][1])]
+    # print(m01, m12, m20)
+    res0 = coordinate(nodes[1], m20, nodes[2], m01)
+    # res1 = coordinate(nodes[2], m01, nodes[0], m12)
+    # res2 = coordinate(nodes[0], m12, nodes[1], m20)
+    return res0
+
+
+def one_time_build_triangle_data_y(label, data_name, k=6):
+    data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format(data_name[:-1]), allow_pickle=True)
+    print(data_y.shape)
+    output = [[] for i in range(k)]
+    z_raw = []
+    for i, one_line in enumerate(label):
+        for j, one_label in enumerate(one_line):
+            # output[one_label].append(list(data_y[i][j]))
+            z_raw.append(list(data_y[i][j]))
+    data_all_trans = np.asarray(z_raw).swapaxes(0, 1)
+    new_lines = []
+    for line in data_all_trans:
+        new_lines.append(np.abs((line - np.nanmean(line)) / np.nanstd(line)))
+    data_all = np.asarray(new_lines).swapaxes(0, 1)
+    tmp_index = 0
+    for i, one_line in enumerate(label):
+        for j, one_label in enumerate(one_line):
+            output[one_label].append(list(data_all[tmp_index + j]))
+        tmp_index += len(one_line)
+    print([len(item) for item in output])
+    return output
+
+
+def get_triangle_data_x(label, data_name, k=6):
+    data_x = np.load(main_path + "data/data_x/data_x_{}.npy".format(data_name), allow_pickle=True)
+    # print(data_x.shape)
+    output = [[] for i in range(k)]
+    z_raw = []
+    for i, one_line in enumerate(label):
+        for j, one_label in enumerate(one_line):
+            tmp_line = [np.mean(data_x[i][j][:148]), np.mean(data_x[i][j][148:296]), np.mean(data_x[i][j][296:])]
+            z_raw.append(tmp_line)
+            # tmp_line = np.asarray(tmp_line)
+            # tmp_line = np.abs((tmp_line - np.mean(tmp_line)) / np.std(tmp_line))
+            # tmp_line = list(tmp_line)
+            #output[one_label].append(tmp_line)
+    data_all_trans = np.asarray(z_raw).swapaxes(0, 1)
+    new_lines = []
+    for line in data_all_trans:
+        new_lines.append(np.abs((line - np.nanmean(line)) / np.nanstd(line)))
+    data_all = np.asarray(new_lines).swapaxes(0, 1)
+    tmp_index = 0
+    for i, one_line in enumerate(label):
+        for j, one_label in enumerate(one_line):
+            output[one_label].append(list(data_all[tmp_index + j]))
+        tmp_index += len(one_line)
+    # print([len(item) for item in output])
+    return output
+
+
+def draw_triangle(labels, label_type, save_path, show_flag=False):
+    x_triangle = [0, 1, 2]
+    y_triangle = [0, 1.732, 0]
+    nodes = [[x_triangle[i], y_triangle[i]] for i in range(3)]
+    color_types = ["red", "cyan", "blue", "green", "orange", "magenta", "yellow"]
+    fig = plt.figure(dpi=400, figsize=(16, 9))
+    # plt.title(title)
+    ax_list = [231, 232, 233, 234, 235, 236]
+    label_dic = {
+        "data_x": ["A", "T", "N"],
+        "data_y": ["CDRSB", "ADAS", "MMSE"]
+    }
+    offset_dic = {
+        "data_x": [[-0.1, -0.1], [2, -0.1], [0.96, 1.8]],
+        "data_y": [[-0.2, -0.1], [1.9, -0.1], [0.9, 1.8]]
+    }
+    for i, one_ax in enumerate(ax_list):
+        ax = fig.add_subplot(one_ax)
+        ax.plot(x_triangle, y_triangle, c="b", linewidth=2)
+        ax.hlines(0, 0, 2, colors="b", linewidth=2)
+        ax.set_title("Cluster #{} ({} Nodes)".format(i + 1, len(labels[i])), y=-0.1)
+        for seat in ["left", "right", "top", "bottom"]:
+            ax.spines[seat].set_visible(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.annotate(label_dic[label_type][0], xy=nodes[0], xytext=offset_dic[label_type][0])
+        ax.annotate(label_dic[label_type][1], xy=nodes[1], xytext=offset_dic[label_type][1])
+        ax.annotate(label_dic[label_type][2], xy=nodes[2], xytext=offset_dic[label_type][2])
+        data = [triangle_crd(nodes, item) for item in labels[i]]
+        data_x = [item[0] for item in data]
+        data_y = [item[1] for item in data]
+        ax.scatter(data_x, data_y, s=5, c=color_types[i])
+    plt.savefig("{}".format(save_path), dpi=400)
+    if show_flag:
+        plt.show()
+
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    #dps_label = np.load("test/for_hist/labels_19.npy", allow_pickle=True)
-    flatten_label = np.load("test/sustain/delta1_final_16.npy")
-    sustain_label = parse_flatten(flatten_label, "delta")
-    np.save("data/sustain/delta1_final_16_labels.npy", sustain_label, allow_pickle=True)
-    heat_map = get_heat_map_data(main_path, 6, sustain_label, "delta")
-    _, heat_map_inter = get_heat_map_data_inter(main_path, 6, sustain_label, "delta")
-    np.save("data/sustain/delta1_final_16_intra.npy", heat_map, allow_pickle=True)
-    np.save("data/sustain/delta1_final_16_inter.npy", heat_map_inter, allow_pickle=True)
+    #build_data_x_y_epsilon(main_path)
+    data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format("epsilon"), allow_pickle=True)
+    print(data_y.shape)
+    print(data_y)
+    # triangle_crd([[0, 0], [2,0],[1,1.732]], [1,0.5,0.34])
+    # dps_label = np.load("test/for_hist/labels_7.npy", allow_pickle=True)
+    # kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
+    # flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    # sustain_label = parse_flatten(flatten_label, "delta")
+    # data_labels_x = one_time_build_triangle_data_x(sustain_label, "delta1", 6)
+    # data_labels_y = one_time_build_triangle_data_y(sustain_label, "delta1", 6)
+    # one_time_plot_triangle(data_labels_x, "data_x")
+    # one_time_plot_triangle(data_labels_y, "data_y")
+    # one_time_plot_triangle(1)
+    # #dps_label = np.load("test/for_hist/labels_19.npy", allow_pickle=True)
+    # flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    # sustain_label = parse_flatten(flatten_label, "delta")
+    # np.save("data/sustain/delta1_final_16_labels.npy", sustain_label, allow_pickle=True)
+    # heat_map = get_heat_map_data(main_path, 6, sustain_label, "delta")
+    # _, heat_map_inter = get_heat_map_data_inter(main_path, 6, sustain_label, "delta")
+    # np.save("data/sustain/delta1_final_16_intra.npy", heat_map, allow_pickle=True)
+    # np.save("data/sustain/delta1_final_16_inter.npy", heat_map_inter, allow_pickle=True)
     # one_time_label_trans(dps_label)
     # one_time_heat_map_data_box(main_path, "test/for_hist/box_data_delta1_k=6_3000_19.pkl", dps_label, "delta")
     # one_time_draw_3_stairs(main_path)

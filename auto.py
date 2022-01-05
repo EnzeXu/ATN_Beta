@@ -306,15 +306,16 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     _, heat_map_data_inter = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1])
     sustain_intra = get_static_sustain(main_path, "intra")
     sustain_inter = get_static_sustain(main_path, "inter")
-    print("Heat map data are built (1/5)")
+    print("Heat map data are built (1/6)")
 
     # draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count))
-    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count), 2, False)
-    print("Intra built (2/5)")
+    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_id={}_cols=7".format(opt.data, times_count, times_count), 2, False, 7)
+    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_id={}_cols=14".format(opt.data, times_count, times_count), 2, False, 14)
+    print("Intra built (2/6)")
 
     # draw_stairs_2(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
-    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
-    print("Inter built (3/5)")
+    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_id={}".format(opt.data, times_count, times_count))
+    print("Inter built (3/6)")
 
     box_data_save_path = "saves/{}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, times_count, opt.data, opt.k, times_count)
     box_data_dist_save_path = "saves/{}/{}/dist/".format(opt.data, times_count)
@@ -323,7 +324,11 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
 
     make_heat_map_data_box(main_path, box_data_save_path, output_labels, opt.data[:-1])
     draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, opt.k, times_count)
-    print("Hist built (4/5)")
+    print("Hist built (4/6)")
+
+    triangle_labels = get_triangle_data_x(output_labels, opt.data, opt.k)
+    draw_triangle(triangle_labels, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}.png".format(opt.data, times_count, opt.data, opt.k, times_count))
+    print("Triangle built (5/6)")
 
     # print("heat_map_data_inter in train:")
     # print(heat_map_data_inter)
@@ -331,7 +336,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
 
     if int(opt.clear) == 1:
         shutil.rmtree("saves/{}/{}/proposed".format(opt.data, times_count))
-        print("Removed folder {} after training (5/5)".format("saves/{}/{}/proposed".format(opt.data, times_count)))
+        print("Removed folder {} after training (6/6)".format("saves/{}/{}/proposed".format(opt.data, times_count)))
     return judge, judge_params, distribution_string
 
 
@@ -363,7 +368,7 @@ if __name__ == "__main__":
     parser.add_argument("--comment", default="", help="any comment")
     parser.add_argument("--data", default="alpha1", help="dataset of data_x (alpha1, alpha2, alpha3 or alpha4)")
     parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
-    parser.add_argument("--k", default=5, help="number of clusters needed")
+    parser.add_argument("--k", default=6, help="number of clusters needed")
     parser.add_argument("--clear", default=1, help="whether to clear the proposed file")
     opt = parser.parse_args()
     params = {
