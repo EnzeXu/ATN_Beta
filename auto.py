@@ -372,6 +372,7 @@ if __name__ == "__main__":
     parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
     parser.add_argument("--k", default=6, help="number of clusters needed")
     parser.add_argument("--clear", default=1, help="whether to clear the proposed file")
+    parser.add_argument("--main_epoch", default=1000, help="iteration in main algorithm")
     opt = parser.parse_args()
     params = {
         # [Step 2] Define network parameters
@@ -398,7 +399,7 @@ if __name__ == "__main__":
         'iteration_s6': 15000,      # 15000
         'check_step_s6': 1000,      # 1000
         # [Step 7] Training main algorithm
-        'iteration_s7': 1000,       # 5000
+        'iteration_s7': int(opt.main_epoch),       # 5000
         'check_step_s7': 100        # 100
     }
     print(json.dumps(params, indent=4, ensure_ascii=False))
