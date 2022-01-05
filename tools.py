@@ -750,8 +750,8 @@ def count_inter(data_inter, threshold=0.05):
 
 
 def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag, base_dic, k):
-    print("heat_map_data_inter in judge_good_train:")
-    print(heat_map_data_inter)
+    # print("heat_map_data_inter in judge_good_train:")
+    # print(heat_map_data_inter)
     cn_ad_labels = np.load("data/cn_ad_labels_{}.npy".format(data_type), allow_pickle=True)
     dic = dict()
     for i in range(k):
