@@ -319,17 +319,17 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_id={}".format(opt.data, times_count, times_count))
     print("Inter built (3/6)")
 
-    box_data_save_path = "saves/{}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, times_count, opt.data, opt.k, times_count)
+    box_data_save_path = "saves/{}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, times_count, opt.data, int(opt.k), times_count)
     box_data_dist_save_path = "saves/{}/{}/dist/".format(opt.data, times_count)
     if not os.path.exists(main_path + box_data_dist_save_path):
         os.makedirs(main_path + box_data_dist_save_path)
 
     make_heat_map_data_box(main_path, box_data_save_path, output_labels, opt.data[:-1])
-    draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, opt.k, times_count)
+    draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, int(opt.k), times_count)
     print("Hist built (4/6)")
 
-    triangle_labels = get_triangle_data_x(main_path, output_labels, opt.data, opt.k)
-    draw_triangle(triangle_labels, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}.png".format(opt.data, times_count, opt.data, opt.k, times_count))
+    triangle_labels = get_triangle_data_x(main_path, output_labels, opt.data, int(opt.k))
+    draw_triangle(triangle_labels, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}.png".format(opt.data, times_count, opt.data, int(opt.k), times_count))
     print("Triangle built (5/6)")
 
     # print("heat_map_data_inter in train:")
