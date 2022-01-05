@@ -1,6 +1,7 @@
 import argparse
+import warnings
+warnings.filterwarnings("ignore")
 import tensorflow as tf
-
 
 from sklearn.model_selection import train_test_split
 from utils_log import save_logging, load_logging
@@ -302,6 +303,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         )
         f.write(string)
     # print(output_labels)
+    print("Labels ready (0/6)")
     heat_map_data = get_heat_map_data(main_path, int(opt.k), output_labels, opt.data[:-1])
     _, heat_map_data_inter = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1])
     sustain_intra = get_static_sustain(main_path, "intra")
@@ -326,7 +328,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, opt.k, times_count)
     print("Hist built (4/6)")
 
-    triangle_labels = get_triangle_data_x(output_labels, opt.data, opt.k)
+    triangle_labels = get_triangle_data_x(main_path, output_labels, opt.data, opt.k)
     draw_triangle(triangle_labels, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}.png".format(opt.data, times_count, opt.data, opt.k, times_count))
     print("Triangle built (5/6)")
 
