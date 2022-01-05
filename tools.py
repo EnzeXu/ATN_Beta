@@ -1688,6 +1688,142 @@ def build_data_x_y_zeta(main_path, max_length=9):
     np.save(main_path + "data/data_x/data_x_zeta4_raw.npy", data_x_zeta4_raw, allow_pickle=True)
 
 
+def build_data_x_y_eta(main_path, max_length=9):
+    df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
+    target_labels = ["CDRSB", "ADAS13"]
+    df = df[["PTID", "EXAMDATE"] + target_labels + ["EcogPtMem"]]
+    df = df[pd.notnull(df["EcogPtMem"])]
+    # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
+    # df["PTID"] = [str(item) for item in df["PTID"]]
+    scores = df[target_labels]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    rescaledX = scaler.fit_transform(scores)
+    np.set_printoptions(precision=3)  # Setting precision for the output
+    scores = rescaledX
+    scores = pd.DataFrame(scores)
+    scores.columns = ["CDRSB", "ADAS13"]
+    for one_target_label in target_labels:
+        df[one_target_label] = scores[one_target_label]
+
+    for one_label in target_labels:
+        df[one_label] = fill_nan(df[one_label])
+    pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
+    dic_date = dict()
+
+    dic_y = dict()
+    for index, row in df.iterrows():
+        pt_id = row.get("PTID")
+        if pt_id in pt_ids:
+            if pt_id not in dic_date:
+                dic_date[pt_id] = [row.get("EXAMDATE")]
+            else:
+                dic_date[pt_id].append(row.get("EXAMDATE"))
+            if pt_id not in dic_y:
+                dic_y[pt_id] = [[row.get(one_target) for one_target in target_labels]]
+            else:
+                dic_y[pt_id].append([row.get(one_target) for one_target in target_labels])
+    with open(main_path + "data/patient_dictionary_eta.pkl", "wb") as f:
+        pickle.dump(dic_date, f)
+    tmp_max = -1
+    empty_count = 0
+    data_y = []
+    for pt_id in pt_ids:
+        tmp_max = max(tmp_max, len(dic_y.get(pt_id)))
+        tmp_y = dic_y.get(pt_id)
+        empty_count += (max_length - len(tmp_y))
+        if len(tmp_y) == 1:
+            tmp_y.append(tmp_y[0])
+        if len(tmp_y) < max_length:
+            tmp_y += [[0] * len(target_labels) for i in range(max_length - len(tmp_y))]
+        data_y.append(tmp_y)
+    data_y = np.asarray(data_y)
+    data_y = np.reshape(data_y, (len(pt_ids), max_length, len(target_labels)))
+    print("tmp_max:", tmp_max)
+    print("empty_count: {} / ({} * {}) = {}".format(empty_count, len(pt_ids), max_length, empty_count / (len(pt_ids) * max_length)))
+    np.save(main_path + "data/data_y/data_y_eta.npy", data_y, allow_pickle=True)
+
+    data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
+    # data_x = np.asarray([item[0: 500] for item in data_x])
+    data_network = scio.loadmat(main_path + "data/network_centrality.mat")
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
+    data_x_beta1 = data_x
+    data_x_beta2 = []
+    data_x_beta3 = []
+    data_x_beta4 = []
+    for i in range(len(data_x)):
+        data_x_beta2.append([np.concatenate((data_x[i][j], laplacian), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta3.append([np.concatenate((data_x[i][j], degree), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta4.append([np.concatenate((data_x[i][j], betweenness, closeness, degree, pagerank, laplacian), axis=0) for j in range(len(data_x[0]))])
+    data_x_beta2 = np.asarray(data_x_beta2)
+    data_x_beta3 = np.asarray(data_x_beta3)
+    data_x_beta4 = np.asarray(data_x_beta4)
+
+    dic_x_index = dict()
+    data_x_eta1 = []
+    data_x_eta2 = []
+    data_x_eta3 = []
+    data_x_eta4 = []
+    data_x_eta1_raw = []
+    data_x_eta2_raw = []
+    data_x_eta3_raw = []
+    data_x_eta4_raw = []
+    for i, pt_id in enumerate(pt_ids):
+        dic_x_index[pt_id] = split_periods_delta(dic_date[pt_id])
+
+        # print(dic_x_index[pt_id])
+        # eta1
+        data_x_eta1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
+        data_x_eta1_raw.append([list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_eta1_tmp) < max_length:
+            data_x_eta1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_eta1_tmp))]
+        data_x_eta1.append(data_x_eta1_tmp)
+
+        # eta2
+        data_x_eta2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
+        data_x_eta2_raw.append([list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_eta2_tmp) < max_length:
+            data_x_eta2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_eta2_tmp))]
+        data_x_eta2.append(data_x_eta2_tmp)
+
+        # eta3
+        data_x_eta3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
+        data_x_eta3_raw.append([list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_eta3_tmp) < max_length:
+            data_x_eta3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_eta3_tmp))]
+        data_x_eta3.append(data_x_eta3_tmp)
+
+        # eta4
+        data_x_eta4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
+        data_x_eta4_raw.append([list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_eta4_tmp) < max_length:
+            data_x_eta4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_eta4_tmp))]
+        data_x_eta4.append(data_x_eta4_tmp)
+
+    print(dic_x_index)
+
+    data_x_eta1 = np.asarray(data_x_eta1)
+    data_x_eta2 = np.asarray(data_x_eta2)
+    data_x_eta3 = np.asarray(data_x_eta3)
+    data_x_eta4 = np.asarray(data_x_eta4)
+
+    print(data_x_eta1.shape)
+    print(data_x_eta2.shape)
+    print(data_x_eta3.shape)
+    print(data_x_eta4.shape)
+    np.save(main_path + "data/data_x/data_x_eta1.npy", data_x_eta1, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta2.npy", data_x_eta2, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta3.npy", data_x_eta3, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta4.npy", data_x_eta4, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta1_raw.npy", data_x_eta1_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta2_raw.npy", data_x_eta2_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta3_raw.npy", data_x_eta3_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_eta4_raw.npy", data_x_eta4_raw, allow_pickle=True)
+
+
 def one_time_draw_4(main_path):
     kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
     sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
@@ -1979,11 +2115,11 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    #build_data_x_y_epsilon(main_path)
-    build_data_x_y_zeta(main_path)
-    data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format("zeta"), allow_pickle=True)
-    print(data_y.shape)
-    print(data_y)
+    build_data_x_y_eta(main_path)
+    # build_data_x_y_zeta(main_path)
+    # data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format("zeta"), allow_pickle=True)
+    # print(data_y.shape)
+    # print(data_y)
     # triangle_crd([[0, 0], [2,0],[1,1.732]], [1,0.5,0.34])
     # dps_label = np.load("test/for_hist/labels_7.npy", allow_pickle=True)
     # kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
