@@ -1777,7 +1777,9 @@ def one_time_build_triangle_data_y(label, data_name, k=6):
 def get_triangle_data_x(main_path, label, data_name, k=6):
     data_x = np.load(main_path + "data/data_x/data_x_{}.npy".format(data_name), allow_pickle=True)
     # print(data_x.shape)
-    output = [[] for i in range(k)]
+    output = []
+    for i in range(k):
+        output.append([])
     z_raw = []
     for i, one_line in enumerate(label):
         for j, one_label in enumerate(one_line):
