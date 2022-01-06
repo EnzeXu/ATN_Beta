@@ -2305,7 +2305,7 @@ def triangle_crd(nodes, one_label):
 
 
 def get_triangle_data_y(main_path, label, data_name, k=6):
-    data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format(data_name[:-1]), allow_pickle=True)
+    data_y = np.load(main_path + "data/data_y/data_y_delta.npy".format(data_name[:-1]), allow_pickle=True)
     #print(data_y.shape)
     output = [[] for i in range(k)]
     z_raw = []
