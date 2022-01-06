@@ -1,0 +1,15 @@
+#!/bin/bash #on the first line, meaning that the script should always be run with bash, rather than another shell.
+
+#SBATCH --job-name="test"
+#SBATCH --partition
+#SBATCH --account=chenGrp
+#SBATCH --nodes=1
+#SBATCH --nodes=2
+#SBATCH --time=0-05:00:00
+#SBATCH --mem=10GB
+#SBATCH --mail-user=xue20@wfu.edu
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --workdir="/home/xue20/workspace/ATN_Beta/"
+
+source /deac/csc/chenGrp/software/tensorflow/bin/activate
+python tools.py
