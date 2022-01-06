@@ -796,8 +796,8 @@ def judge_good_train(labels, data_type, heat_map_data, heat_map_data_inter, flag
     return judge, param_dic, distribution_string
 
 
-def save_record(main_path, index, distribution_string, judge, judge_params, comments, data_name, params=None):
-    with open(main_path + "record/{}/record_{}.csv".format(data_name, data_name), "a") as f:
+def save_record(main_path, opt, index, distribution_string, judge, judge_params, comments, data_name, params=None):
+    with open(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(data_name, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), data_name), "a") as f:
         f.write("{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},".format(
             index,
             judge,
@@ -840,13 +840,13 @@ def save_record(main_path, index, distribution_string, judge, judge_params, comm
         f.write("\n")
 
 
-def build_kmeans_result(main_path, kmeans_labels, data_name, k):
+def build_kmeans_result(main_path, opt, kmeans_labels, data_name, k):
     # kmeans_labels = np.asarray(kmeans_labels)
     res = get_heat_map_data(main_path, k, kmeans_labels, data_name[:-1])
     _, res_inter = get_heat_map_data_inter(main_path, k, kmeans_labels, data_name[:-1])
     judge, judge_params, distribution_string = judge_good_train(kmeans_labels, data_name[:-1], res, res_inter, False, None, k)
     # print(judge, judge_params, distribution_string)
-    save_record(main_path, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
+    save_record(main_path, opt, -1, distribution_string, -1, judge_params, "kmeans_base", data_name)
     return judge_params, res, res_inter
 
 
@@ -898,7 +898,7 @@ def create_label_string(cluster_labels, const_cn_ad_labels, k):
     return ["{}+{}".format(dic.get("CN"), dic.get("AD")) for dic in dic_list]
 
 
-def initial_record(main_path, data_x_raw, data_name, seed_count, k):
+def initial_record(main_path, opt, data_x_raw, data_name, seed_count, k):
     if not os.path.exists(main_path + "record/{}/record_{}.csv".format(data_name, data_name)):
         copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record_{}.csv".format(data_name, data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS] + [item + "_inter_count" for item in CLINICAL_LABELS]
@@ -910,7 +910,7 @@ def initial_record(main_path, data_x_raw, data_name, seed_count, k):
         print("Building kmeans bases... Please wait...")
         for seed in tqdm(range(seed_count)):
             kmeans_labels = get_kmeans_base(data_x_raw, seed, k)
-            tmp_params, res, res_inter = build_kmeans_result(main_path, kmeans_labels, data_name, k)
+            tmp_params, res, res_inter = build_kmeans_result(main_path, opt, kmeans_labels, data_name, k)
             res_all.append(res)
             res_all_inter.append(res_inter)
             for one_label in clinical_judge_labels:

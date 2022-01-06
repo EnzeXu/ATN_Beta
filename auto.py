@@ -72,7 +72,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     # times_count = '10'
     ITERATION = parameters.get("iteration_s3")  # 1000  # 3750
     check_step = parameters.get("check_step_s3")  # 250  # 250
-    save_path = main_path + 'saves/{}/{}/proposed/init/'.format(opt.data, times_count)  # ENZE updated
+    save_path = main_path + 'saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed/init/'.format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count)  # ENZE updated
     if not os.path.exists(save_path + '/models/'):
         os.makedirs(save_path + '/models/')
     tf.reset_default_graph()
@@ -117,7 +117,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     keep_prob = parameters.get("keep_prob_s4")  # 0.7
     lr_rate1 = parameters.get("lr_rate1")  # 0.0001  # 0.0001
     lr_rate2 = parameters.get("lr_rate2")  # 0.0001  # 0.0001
-    save_path = main_path + 'saves/{}/{}/proposed/trained/'.format(opt.data, times_count)  # ENZE updated
+    save_path = main_path + 'saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed/trained/'.format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count)  # ENZE updated
     if not os.path.exists(save_path + '/models/'):
         os.makedirs(save_path + '/models/')
     if not os.path.exists(save_path + '/results/'):
@@ -126,7 +126,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     # LOAD INITIALIZED NETWORK
     if print_flag:
         print("[{:0>4d}][Step 5] Load initialized network".format(times_count))
-    load_path = main_path + 'saves/{}/{}/proposed/init/'.format(opt.data, times_count)  # ENZE updated
+    load_path = main_path + 'saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed/init/'.format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count)  # ENZE updated
     tf.reset_default_graph()
     # Turn on xla optimization
     config = tf.ConfigProto()
@@ -246,8 +246,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         output_labels.append(pred_y[tmp_index: tmp_index + len(pt_dic.get(pt_id))])
         tmp_index += len(pt_dic.get(pt_id))
     # print(patientProgressions)
-    np.save(main_path + "saves/{}/{}/labels_{}.npy".format(opt.data, times_count, times_count), output_labels, allow_pickle=True)
-    with open(main_path + "saves/{}/{}/parameters_{}.txt".format(opt.data, times_count, times_count), "w") as f:
+    np.save(main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/labels_{}.npy".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), output_labels, allow_pickle=True)
+    with open(main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/parameters_{}.txt".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), "w") as f:
         string = "# [Step 2] Define network parameters\n" \
                  "'K': {},\n" \
                  "'h_dim_FC': {},\n" \
@@ -310,17 +310,15 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     sustain_inter = get_static_sustain(main_path, "inter")
     print("Heat map data are built (1/6)")
 
-    # draw_heat_map_2(base_res, heat_map_data, main_path + "saves/{}/{}/intra_cluster_{}".format(opt.data, times_count, times_count))
-    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_id={}_cols=7".format(opt.data, times_count, times_count), 2, False, 7)
-    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/{}/{}/intra_cluster_id={}_cols=14".format(opt.data, times_count, times_count), 2, False, 14)
+    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=7".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 7)
+    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=14".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 14)
     print("Intra built (2/6)")
 
-    # draw_stairs_2(base_res_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_{}".format(opt.data, times_count, times_count))
-    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/{}/{}/inter_cluster_id={}".format(opt.data, times_count, times_count))
+    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
     print("Inter built (3/6)")
 
-    box_data_save_path = "saves/{}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, times_count, opt.data, int(opt.k), times_count)
-    box_data_dist_save_path = "saves/{}/{}/dist/".format(opt.data, times_count)
+    box_data_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
+    box_data_dist_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
     if not os.path.exists(main_path + box_data_dist_save_path):
         os.makedirs(main_path + box_data_dist_save_path)
 
@@ -330,8 +328,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
 
     triangle_labels_x = get_triangle_data_x(main_path, output_labels, opt.data, int(opt.k))
     triangle_labels_y = get_triangle_data_y(main_path, output_labels, opt.data, int(opt.k))
-    draw_triangle(triangle_labels_x, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}_data_x.png".format(opt.data, times_count, opt.data, int(opt.k), times_count))
-    draw_triangle(triangle_labels_y, "data_y", "saves/{}/{}/triangle_{}_k={}_id={}_data_y.png".format(opt.data, times_count, opt.data, int(opt.k), times_count))
+    draw_triangle(triangle_labels_x, "data_x", "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/triangle_{}_k={}_id={}_data_x.png".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count))
+    draw_triangle(triangle_labels_y, "data_y", "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/triangle_{}_k={}_id={}_data_y.png".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count))
     print("Triangle built (5/6)")
 
     # print("heat_map_data_inter in train:")
@@ -339,8 +337,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic, int(opt.k))
 
     if int(opt.clear) == 1:
-        shutil.rmtree("saves/{}/{}/proposed".format(opt.data, times_count))
-        print("Removed folder {} after training (6/6)".format("saves/{}/{}/proposed".format(opt.data, times_count)))
+        shutil.rmtree("saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count))
+        print("Removed folder {} after training (6/6)".format("saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count)))
     return judge, judge_params, distribution_string
 
 
@@ -356,12 +354,12 @@ def start(params, opt):
     data_x = load_data(main_path, "/data/data_x/data_x_{}.npy".format(opt.data))
     # print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if "alpha" in opt.data else "_raw"))
-    base_dic, base_res, base_res_inter = initial_record(main_path, data_x_raw, opt.data, int(opt.kmeans), int(opt.k))
+    base_dic, base_res, base_res_inter = initial_record(main_path, opt, data_x_raw, opt.data, int(opt.kmeans), int(opt.k))
     start_index = get_start_index(main_path, opt.data)
 
     for i in range(times):
         j, p, ds = train(main_path, opt, data_x, start_index + i, params, base_dic, base_res, base_res_inter)
-        save_record(main_path, start_index + i, ds, j, p, comments, opt.data, params)
+        save_record(main_path, opt, start_index + i, ds, j, p, comments, opt.data, params)
         # get_start_index(main_path, opt.data)
 
 
@@ -375,34 +373,37 @@ if __name__ == "__main__":
     parser.add_argument("--k", default=6, help="number of clusters needed")
     parser.add_argument("--clear", default=1, help="whether to clear the proposed file")
     parser.add_argument("--main_epoch", default=1000, help="iteration in main algorithm")
+    parser.add_argument("--alpha", default=0.00001, help="alpha")
+    parser.add_argument("--beta", default=1, help="beta")
+    parser.add_argument("--h_dim", default=8, help="h_dim_FC & h_dim_RNN")
     opt = parser.parse_args()
     params = {
         # [Step 2] Define network parameters
-        'K': int(opt.k),            # 5
-        'h_dim_FC': 8,              # 26
-        'h_dim_RNN': 8,             # 26
-        'num_layer_encoder': 2,     # 2
-        'num_layer_selector': 3,    # 3
-        'num_layer_predictor': 2,   # 2
+        'K': int(opt.k),              # 5
+        'h_dim_FC': int(opt.h_dim),   # 26
+        'h_dim_RNN': int(opt.h_dim),  # 26
+        'num_layer_encoder': 2,       # 2
+        'num_layer_selector': 3,      # 3
+        'num_layer_predictor': 2,     # 2
         # [Step 3] Initialize network
-        'lr_rate': 0.0001,          # 0.0001
-        'keep_prob_s3': 0.5,        # 0.5
-        'mb_size_s3': 32,           # 32
-        'iteration_s3': 1000,       # 3750
-        'check_step_s3': 100,       # 250
+        'lr_rate': 0.0001,            # 0.0001
+        'keep_prob_s3': 0.5,          # 0.5
+        'mb_size_s3': 32,             # 32
+        'iteration_s3': 1000,         # 3750
+        'check_step_s3': 100,         # 250
         # [Step 4] Train temporal phenotyping
-        'alpha': 0.00001,           # 0.00001
-        'beta': 1,                  # 1
-        'mb_size_s4': 32,           # 8
-        'keep_prob_s4': 0.7,        # 0.7
-        'lr_rate1': 0.0001,         # 0.0001
-        'lr_rate2': 0.0001,         # 0.0001
+        'alpha': float(opt.alpha),    # 0.00001
+        'beta': float(opt.beta),      # 1
+        'mb_size_s4': 32,             # 8
+        'keep_prob_s4': 0.7,          # 0.7
+        'lr_rate1': 0.0001,           # 0.0001
+        'lr_rate2': 0.0001,           # 0.0001
         # [Step 6] Initializing embedding & selector
-        'iteration_s6': 15000,      # 15000
-        'check_step_s6': 1000,      # 1000
+        'iteration_s6': 15000,        # 15000
+        'check_step_s6': 1000,        # 1000
         # [Step 7] Training main algorithm
         'iteration_s7': int(opt.main_epoch),       # 5000
-        'check_step_s7': 100        # 100
+        'check_step_s7': 100          # 100
     }
     print(json.dumps(params, indent=4, ensure_ascii=False))
     start(params, opt)
