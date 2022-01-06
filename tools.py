@@ -678,13 +678,13 @@ def one_time_draw_tsne():
     plt.show()
 
 
-def get_heat_map_data_inter(main_path, K, label, data_type):
+def get_heat_map_data_inter(main_path, K, label, data_type, flag=False):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
 
     data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
     target_labels = CLINICAL_LABELS
-    data = data[["PTID", "EXAMDATE"] + target_labels]
+    data = data[["PTID", "EXAMDATE"] + target_labels + ["CDRSB", "ADAS13"]]
     data = data[pd.notnull(data["EcogPtMem"])]
 
     for one_label in target_labels:
@@ -701,6 +701,8 @@ def get_heat_map_data_inter(main_path, K, label, data_type):
     for j, one_pt_id in enumerate(pt_ids):
         for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
             tmp = []
+            if flag:
+                target_labels = ["CDRSB", "ADAS13"]
             for one_target_label in target_labels:
                 tmp.append(float(data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]))
             x_inter.append(tmp)

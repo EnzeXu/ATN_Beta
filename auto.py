@@ -305,7 +305,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     # print(output_labels)
     print("Labels ready (0/6)")
     heat_map_data = get_heat_map_data(main_path, int(opt.k), output_labels, opt.data[:-1])
-    _, heat_map_data_inter = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1])
+    _, heat_map_data_inter_14 = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1], False)
+    _, heat_map_data_inter_2 = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1], True)
     sustain_intra = get_static_sustain(main_path, "intra")
     sustain_inter = get_static_sustain(main_path, "inter")
     print("Heat map data are built (1/6)")
@@ -314,7 +315,9 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=14".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 14)
     print("Intra built (2/6)")
 
-    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_14, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_2, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/modified_inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+
     print("Inter built (3/6)")
 
     box_data_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
@@ -334,7 +337,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
 
     # print("heat_map_data_inter in train:")
     # print(heat_map_data_inter)
-    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter, True, base_dic, int(opt.k))
+    judge, judge_params, distribution_string = judge_good_train(output_labels, opt.data[:-1], heat_map_data, heat_map_data_inter_14, True, base_dic, int(opt.k))
 
     if int(opt.clear) == 1:
         shutil.rmtree("saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count))
