@@ -2145,7 +2145,7 @@ def parse_flatten(flatten_labels, data_type):
     return normal_labels
 
 
-def one_time_label_trans(label, k=6):
+def one_time_label_trans(label, index=0, k=6):
     trans_table = [[0] * k for i in range(k)]
     trans_table_string = [[""] * (k + 1) for i in range(k)]
     count = [0] * k
@@ -2175,7 +2175,9 @@ def one_time_label_trans(label, k=6):
         for j in range(k):
             trans_table_ordered[i][j] = trans_table_string[order[i]][order[j]]
     # print(np.asarray(trans_table_ordered))
+    print("{}\tfrom\\to\tSubtype #1\tSubtype #2\tSubtype #3\tSubtype #4\tSubtype #5\tSubtype #6\tCount_label_clear\tCount_label".format(index))
     for i in range(k):
+        print("\tSubtype #{}\t".format(i + 1), end="")
         for j in range(k):
             print("{0}\t".format(trans_table_ordered[i][j]), end="")
         print("{}(100.0%)\t{}".format(count_clear[order[i]], count[order[i]]), end="")
@@ -2400,12 +2402,12 @@ if __name__ == "__main__":
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
     # dps_label = np.load("test/labels_40.npy", allow_pickle=True)
-
-    dps_label = np.load("data/sustain/delta1_final_16_labels.npy", allow_pickle=True)
-    try:
-        one_time_label_trans(dps_label)
-    except Exception as e:
-        print("Skipped:", e)
+    for i in [7,24,27,28,29,30,34,36,37,40,42,50]:
+        dps_label = np.load("/Users/enze/Downloads/from termius/zeta2_k=6_50_epoch=3000/zeta2/{0}/labels_{0}.npy".format(i), allow_pickle=True)
+        try:
+            one_time_label_trans(dps_label, i)
+        except Exception as e:
+            print("{}\tSkipped:".format(i), e)
 
     # make_heat_map_data_box(main_path, "test/test_box_zeta.pkl", dps_label, "zeta")
     # draw_boxplt("test/test_box_zeta.pkl", "test/test_box/", "zeta2", 6, 999)
