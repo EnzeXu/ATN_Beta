@@ -9,7 +9,6 @@
 #SBATCH --mem=10GB
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --workdir="/deac/generalGrp/chenGrp/xue20/ATN_Beta/"
 
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
-python tools.py
+python /deac/generalGrp/chenGrp/xue20/ATN_Beta/tools.py
