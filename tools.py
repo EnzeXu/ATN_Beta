@@ -920,7 +920,7 @@ def initial_record(main_path, opt, data_x_raw, data_name, seed_count, k):
             dic[one_label] = round(dic.get(one_label) / seed_count, 2) if seed_count > 0 else 0
         with open("data/initial/{}/base_dic.pkl".format(data_name), "wb") as f:
             pickle.dump(dic, f)
-        save_record(main_path, 0, "None", -1, dic, "kmeans_base_average", data_name)
+        save_record(main_path, opt, 0, "None", -1, dic, "kmeans_base_average", data_name)
         if seed_count > 0:
             np.save("data/initial/{}/base_res.npy".format(data_name), res_all, allow_pickle=True)
             np.save("data/initial/{}/base_res_inter.npy".format(data_name), res_all_inter, allow_pickle=True)
