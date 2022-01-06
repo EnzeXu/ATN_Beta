@@ -355,7 +355,7 @@ def start(params, opt):
     # print("raw_path:", "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if ("alpha" in opt.data or "beta" in opt.data) else "_raw"))
     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}{}.npy".format(opt.data, "" if "alpha" in opt.data else "_raw"))
     base_dic, base_res, base_res_inter = initial_record(main_path, opt, data_x_raw, opt.data, int(opt.kmeans), int(opt.k))
-    start_index = get_start_index(main_path, opt.data)
+    start_index = get_start_index(main_path, opt)
 
     for i in range(times):
         j, p, ds = train(main_path, opt, data_x, start_index + i, params, base_dic, base_res, base_res_inter)

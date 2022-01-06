@@ -850,8 +850,8 @@ def build_kmeans_result(main_path, opt, kmeans_labels, data_name, k):
     return judge_params, res, res_inter
 
 
-def get_start_index(main_path, data_name):
-    df = pd.read_csv(main_path + "record/{}/record_{}.csv".format(data_name, data_name))
+def get_start_index(main_path, opt):
+    df = pd.read_csv(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), opt.data))
     # print(list(df["Id"]))
     start_index = max([int(item) for item in list(df["Id"])]) + 1
     # print(start_index)
@@ -899,8 +899,8 @@ def create_label_string(cluster_labels, const_cn_ad_labels, k):
 
 
 def initial_record(main_path, opt, data_x_raw, data_name, seed_count, k):
-    if not os.path.exists(main_path + "record/{}/record_{}.csv".format(data_name, data_name)):
-        copyfile(main_path + "record/record_0.csv", main_path + "record/{}/record_{}.csv".format(data_name, data_name))
+    if not os.path.exists(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(data_name, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), data_name)):
+        copyfile(main_path + "record/record_0.csv", main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(data_name, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS] + [item + "_inter_count" for item in CLINICAL_LABELS]
         dic = dict()
         res_all = []
