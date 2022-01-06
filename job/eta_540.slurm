@@ -2,7 +2,7 @@
 
 #SBATCH --job-name="eta_540"
 #SBATCH --partition=medium
-#SBATCH --nodes=4
+#SBATCH --nodes=6
 #SBATCH --time=2-00:00:00
 #SBATCH --mem=20GB
 #SBATCH --mail-user=xue20@wfu.edu
