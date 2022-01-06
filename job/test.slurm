@@ -2,7 +2,6 @@
 
 #SBATCH --job-name="test"
 #SBATCH --partition
-#SBATCH --nodes=1
 #SBATCH --nodes=2
 #SBATCH --time=0-05:00:00
 #SBATCH --mem=10GB
