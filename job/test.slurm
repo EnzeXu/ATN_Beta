@@ -1,4 +1,4 @@
-#!/bin/bash #on the first line, meaning that the script should always be run with bash, rather than another shell.
+#!/bin/bash -l
 
 #SBATCH --job-name="test"
 #SBATCH --partition=medium
