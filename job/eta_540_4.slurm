@@ -15,6 +15,6 @@
 source /deac/csc/chenGrp/software/tensorflow/bin/activate
 
 
-python /home/xue20/workspace/ATN_Beta/auto.py --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.001 --beta 1 --h_dim 8
-python /home/xue20/workspace/ATN_Beta/auto.py --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.001 --beta 1 --h_dim 12
-python /home/xue20/workspace/ATN_Beta/auto.py --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.001 --beta 1 --h_dim 16
+python /deac/generalGrp/chenGrp/xue20/ATN_Beta/auto.py --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.001 --beta 1 --h_dim 8
+python /deac/generalGrp/chenGrp/xue20/ATN_Beta/auto.py --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.001 --beta 1 --h_dim 12
+python /deac/generalGrp/chenGrp/xue20/ATN_Beta/auto.py --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.001 --beta 1 --h_dim 16
