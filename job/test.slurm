@@ -9,7 +9,7 @@
 #SBATCH --mail-user=xue20@wfu.edu
 #SBATCH --mail-type=BEGIN,END,FAIL
 
-#SBATCH --account=chenGrp
+
 #SBATCH --output="job/test-%jo"
 #SBATCH --error="job/test-%je"
 
