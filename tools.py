@@ -900,6 +900,7 @@ def create_label_string(cluster_labels, const_cn_ad_labels, k):
 
 def initial_record(main_path, opt, data_x_raw, data_name, seed_count, k):
     if not os.path.exists(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(data_name, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), data_name)):
+        os.makedirs(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/".format(data_name, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch)))
         copyfile(main_path + "record/record_0.csv", main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(data_name, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), data_name))
         clinical_judge_labels = ["Cluster_std"] + [item + "_var" for item in CLINICAL_LABELS] + [item + "_inter_count" for item in CLINICAL_LABELS]
         dic = dict()
