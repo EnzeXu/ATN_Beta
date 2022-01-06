@@ -77,7 +77,7 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
     df.to_csv('{}/dff.csv'.format(save_path), index=False)
     _data = pd.read_csv('{}/dff.csv'.format(save_path))
 
-    for index in range(7, 14):
+    for index in range(0, 14):
         data = copy.deepcopy(_data)
         # data = df.copy(deep=True)
         # print(data.columns)

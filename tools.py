@@ -24,6 +24,7 @@ from sklearn.manifold import TSNE
 from sklearn.preprocessing import MinMaxScaler
 
 from strings import CLINICAL_LABELS, DATA_SETS
+from box_adjusted import draw_boxplt
 
 
 def f_get_minibatch(mb_size, x, y):
@@ -1824,6 +1825,286 @@ def build_data_x_y_eta(main_path, max_length=9):
     np.save(main_path + "data/data_x/data_x_eta4_raw.npy", data_x_eta4_raw, allow_pickle=True)
 
 
+def build_data_x_y_theta(main_path, max_length=5):
+    df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
+    target_labels = ["CDRSB", "ADAS13"]
+    df = df[["PTID", "EXAMDATE"] + target_labels + ["EcogPtMem"]]
+    df = df[pd.notnull(df["EcogPtMem"])]
+    # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
+    # df["PTID"] = [str(item) for item in df["PTID"]]
+    scores = df[target_labels]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    rescaledX = scaler.fit_transform(scores)
+    np.set_printoptions(precision=3)  # Setting precision for the output
+    scores = rescaledX
+    scores = pd.DataFrame(scores)
+    scores.columns = ["CDRSB", "ADAS13"]
+    for one_target_label in target_labels:
+        df[one_target_label] = scores[one_target_label]
+
+    for one_label in target_labels:
+        df[one_label] = fill_nan(df[one_label])
+    pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
+    dic_date = dict()
+
+    dic_y = dict()
+    for index, row in df.iterrows():
+        pt_id = row.get("PTID")
+        if pt_id in pt_ids:
+            if pt_id not in dic_date:
+                dic_date[pt_id] = [row.get("EXAMDATE")]
+            else:
+                dic_date[pt_id].append(row.get("EXAMDATE"))
+            if pt_id not in dic_y:
+                dic_y[pt_id] = [[row.get(one_target) for one_target in target_labels]]
+            else:
+                dic_y[pt_id].append([row.get(one_target) for one_target in target_labels])
+    for pt_id in pt_ids:
+        dic_date[pt_id] = dic_date[pt_id][:max_length]
+    with open(main_path + "data/patient_dictionary_theta.pkl", "wb") as f:
+        pickle.dump(dic_date, f)
+    tmp_max = -1
+    empty_count = 0
+    data_y = []
+    for pt_id in pt_ids:
+        tmp_max = max(tmp_max, len(dic_y.get(pt_id)))
+        tmp_y = dic_y.get(pt_id)
+        empty_count += (max_length - len(tmp_y))
+        if len(tmp_y) == 1:
+            tmp_y.append(tmp_y[0])
+        if len(tmp_y) < max_length:
+            tmp_y += [[0] * len(target_labels) for i in range(max_length - len(tmp_y))]
+        data_y.append(tmp_y[:max_length])
+    data_y = np.asarray(data_y)
+    data_y = np.reshape(data_y, (len(pt_ids), max_length, len(target_labels)))
+    print("data_y.shape:", data_y.shape)
+    print("tmp_max:", tmp_max)
+    print("empty_count: {} / ({} * {}) = {}".format(empty_count, len(pt_ids), max_length, empty_count / (len(pt_ids) * max_length)))
+    np.save(main_path + "data/data_y/data_y_theta.npy", data_y, allow_pickle=True)
+
+    data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
+    # data_x = np.asarray([item[0: 500] for item in data_x])
+    data_network = scio.loadmat(main_path + "data/network_centrality.mat")
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
+    data_x_beta1 = data_x
+    data_x_beta2 = []
+    data_x_beta3 = []
+    data_x_beta4 = []
+    for i in range(len(data_x)):
+        data_x_beta2.append([np.concatenate((data_x[i][j], laplacian), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta3.append([np.concatenate((data_x[i][j], degree), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta4.append([np.concatenate((data_x[i][j], betweenness, closeness, degree, pagerank, laplacian), axis=0) for j in range(len(data_x[0]))])
+    data_x_beta2 = np.asarray(data_x_beta2)
+    data_x_beta3 = np.asarray(data_x_beta3)
+    data_x_beta4 = np.asarray(data_x_beta4)
+
+    dic_x_index = dict()
+    data_x_theta1 = []
+    data_x_theta2 = []
+    data_x_theta3 = []
+    data_x_theta4 = []
+    data_x_theta1_raw = []
+    data_x_theta2_raw = []
+    data_x_theta3_raw = []
+    data_x_theta4_raw = []
+    for i, pt_id in enumerate(pt_ids):
+        dic_x_index[pt_id] = split_periods_delta(dic_date[pt_id])
+
+        # print(dic_x_index[pt_id])
+        # theta1
+        data_x_theta1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
+        data_x_theta1_raw.append([list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_theta1_tmp) < max_length:
+            data_x_theta1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_theta1_tmp))]
+        data_x_theta1.append(data_x_theta1_tmp[:max_length])
+
+        # theta2
+        data_x_theta2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
+        data_x_theta2_raw.append([list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_theta2_tmp) < max_length:
+            data_x_theta2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_theta2_tmp))]
+        data_x_theta2.append(data_x_theta2_tmp[:max_length])
+
+        # theta3
+        data_x_theta3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
+        data_x_theta3_raw.append([list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_theta3_tmp) < max_length:
+            data_x_theta3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_theta3_tmp))]
+        data_x_theta3.append(data_x_theta3_tmp[:max_length])
+
+        # theta4
+        data_x_theta4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
+        data_x_theta4_raw.append([list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_theta4_tmp) < max_length:
+            data_x_theta4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_theta4_tmp))]
+        data_x_theta4.append(data_x_theta4_tmp[:max_length])
+
+    print(dic_x_index)
+
+    data_x_theta1 = np.asarray(data_x_theta1)
+    data_x_theta2 = np.asarray(data_x_theta2)
+    data_x_theta3 = np.asarray(data_x_theta3)
+    data_x_theta4 = np.asarray(data_x_theta4)
+
+    print(data_x_theta1.shape)
+    print(data_x_theta2.shape)
+    print(data_x_theta3.shape)
+    print(data_x_theta4.shape)
+    np.save(main_path + "data/data_x/data_x_theta1.npy", data_x_theta1, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta2.npy", data_x_theta2, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta3.npy", data_x_theta3, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta4.npy", data_x_theta4, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta1_raw.npy", data_x_theta1_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta2_raw.npy", data_x_theta2_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta3_raw.npy", data_x_theta3_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_theta4_raw.npy", data_x_theta4_raw, allow_pickle=True)
+    print(data_x_theta2)
+
+
+def build_data_x_y_iota(main_path, max_length=1):
+    df = pd.read_excel(main_path + "data/MRI_information_All_Measurement.xlsx", engine=get_engine())
+    target_labels = ["CDRSB", "ADAS13"]
+    df = df[["PTID", "EXAMDATE"] + target_labels + ["EcogPtMem"]]
+    df = df[pd.notnull(df["EcogPtMem"])]
+    # df["EXAMDATE"] = [str(item) for item in df["EXAMDATE"]]
+    # df["PTID"] = [str(item) for item in df["PTID"]]
+    scores = df[target_labels]
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    rescaledX = scaler.fit_transform(scores)
+    np.set_printoptions(precision=3)  # Setting precision for the output
+    scores = rescaledX
+    scores = pd.DataFrame(scores)
+    scores.columns = ["CDRSB", "ADAS13"]
+    for one_target_label in target_labels:
+        df[one_target_label] = scores[one_target_label]
+
+    for one_label in target_labels:
+        df[one_label] = fill_nan(df[one_label])
+    pt_ids = np.load(main_path + "data/ptid.npy", allow_pickle=True)
+    dic_date = dict()
+
+    dic_y = dict()
+    for index, row in df.iterrows():
+        pt_id = row.get("PTID")
+        if pt_id in pt_ids:
+            if pt_id not in dic_date:
+                dic_date[pt_id] = [row.get("EXAMDATE")]
+            else:
+                dic_date[pt_id].append(row.get("EXAMDATE"))
+            if pt_id not in dic_y:
+                dic_y[pt_id] = [[row.get(one_target) for one_target in target_labels]]
+            else:
+                dic_y[pt_id].append([row.get(one_target) for one_target in target_labels])
+    for pt_id in pt_ids:
+        dic_date[pt_id] = dic_date[pt_id][:max_length]
+    with open(main_path + "data/patient_dictionary_iota.pkl", "wb") as f:
+        pickle.dump(dic_date, f)
+    tmp_max = -1
+    empty_count = 0
+    data_y = []
+    for pt_id in pt_ids:
+        tmp_max = max(tmp_max, len(dic_y.get(pt_id)))
+        tmp_y = dic_y.get(pt_id)
+        empty_count += (max_length - len(tmp_y))
+        if len(tmp_y) == 1:
+            tmp_y.append(tmp_y[0])
+        if len(tmp_y) < max_length:
+            tmp_y += [[0] * len(target_labels) for i in range(max_length - len(tmp_y))]
+        data_y.append(tmp_y[:max_length])
+    data_y = np.asarray(data_y)
+    data_y = np.reshape(data_y, (len(pt_ids), max_length, len(target_labels)))
+    print("data_y.shape:", data_y.shape)
+    print("tmp_max:", tmp_max)
+    print("empty_count: {} / ({} * {}) = {}".format(empty_count, len(pt_ids), max_length, empty_count / (len(pt_ids) * max_length)))
+    np.save(main_path + "data/data_y/data_y_iota.npy", data_y, allow_pickle=True)
+
+    data_x = np.load(main_path + "data/pred_1500.npy", allow_pickle=True)
+    # data_x = np.asarray([item[0: 500] for item in data_x])
+    data_network = scio.loadmat(main_path + "data/network_centrality.mat")
+    betweenness = np.abs(np.asarray([item[0] for item in data_network["betweenness"]]))
+    closeness = np.abs(np.asarray([item[0] for item in data_network["closeness"]]))
+    degree = np.abs(np.asarray([item[0] for item in data_network["degree"]]))
+    laplacian = np.abs(np.asarray([item[0] for item in data_network["laplacian"]]))
+    pagerank = np.abs(np.asarray([item[0] for item in data_network["pagerank"]]))
+    data_x_beta1 = data_x
+    data_x_beta2 = []
+    data_x_beta3 = []
+    data_x_beta4 = []
+    for i in range(len(data_x)):
+        data_x_beta2.append([np.concatenate((data_x[i][j], laplacian), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta3.append([np.concatenate((data_x[i][j], degree), axis=0) for j in range(len(data_x[0]))])
+        data_x_beta4.append([np.concatenate((data_x[i][j], betweenness, closeness, degree, pagerank, laplacian), axis=0) for j in range(len(data_x[0]))])
+    data_x_beta2 = np.asarray(data_x_beta2)
+    data_x_beta3 = np.asarray(data_x_beta3)
+    data_x_beta4 = np.asarray(data_x_beta4)
+
+    dic_x_index = dict()
+    data_x_iota1 = []
+    data_x_iota2 = []
+    data_x_iota3 = []
+    data_x_iota4 = []
+    data_x_iota1_raw = []
+    data_x_iota2_raw = []
+    data_x_iota3_raw = []
+    data_x_iota4_raw = []
+    for i, pt_id in enumerate(pt_ids):
+        dic_x_index[pt_id] = split_periods_delta(dic_date[pt_id])
+
+        # print(dic_x_index[pt_id])
+        # iota1
+        data_x_iota1_tmp = [list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]]
+        data_x_iota1_raw.append([list(data_x_beta1[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_iota1_tmp) < max_length:
+            data_x_iota1_tmp += [[0] * data_x_beta1.shape[2] for i in range(max_length - len(data_x_iota1_tmp))]
+        data_x_iota1.append(data_x_iota1_tmp[:max_length])
+
+        # iota2
+        data_x_iota2_tmp = [list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]]
+        data_x_iota2_raw.append([list(data_x_beta2[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_iota2_tmp) < max_length:
+            data_x_iota2_tmp += [[0] * data_x_beta2.shape[2] for i in range(max_length - len(data_x_iota2_tmp))]
+        data_x_iota2.append(data_x_iota2_tmp[:max_length])
+
+        # iota3
+        data_x_iota3_tmp = [list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]]
+        data_x_iota3_raw.append([list(data_x_beta3[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_iota3_tmp) < max_length:
+            data_x_iota3_tmp += [[0] * data_x_beta3.shape[2] for i in range(max_length - len(data_x_iota3_tmp))]
+        data_x_iota3.append(data_x_iota3_tmp[:max_length])
+
+        # iota4
+        data_x_iota4_tmp = [list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]]
+        data_x_iota4_raw.append([list(data_x_beta4[i][index]) for index in dic_x_index[pt_id]])
+        if len(data_x_iota4_tmp) < max_length:
+            data_x_iota4_tmp += [[0] * data_x_beta4.shape[2] for i in range(max_length - len(data_x_iota4_tmp))]
+        data_x_iota4.append(data_x_iota4_tmp[:max_length])
+
+    print(dic_x_index)
+
+    data_x_iota1 = np.asarray(data_x_iota1)
+    data_x_iota2 = np.asarray(data_x_iota2)
+    data_x_iota3 = np.asarray(data_x_iota3)
+    data_x_iota4 = np.asarray(data_x_iota4)
+
+    print(data_x_iota1.shape)
+    print(data_x_iota2.shape)
+    print(data_x_iota3.shape)
+    print(data_x_iota4.shape)
+    np.save(main_path + "data/data_x/data_x_iota1.npy", data_x_iota1, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota2.npy", data_x_iota2, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota3.npy", data_x_iota3, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota4.npy", data_x_iota4, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota1_raw.npy", data_x_iota1_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota2_raw.npy", data_x_iota2_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota3_raw.npy", data_x_iota3_raw, allow_pickle=True)
+    np.save(main_path + "data/data_x/data_x_iota4_raw.npy", data_x_iota4_raw, allow_pickle=True)
+    print(data_x_iota2)
+
+
 def one_time_draw_4(main_path):
     kmeans_label = np.load("test/kmeans_delta1_labels.npy", allow_pickle=True)
     sustain_label = np.load("test/sustain_delta1_labels_2.npy", allow_pickle=True)
@@ -2023,9 +2304,9 @@ def triangle_crd(nodes, one_label):
     return res0
 
 
-def one_time_build_triangle_data_y(label, data_name, k=6):
+def get_triangle_data_y(main_path, label, data_name, k=6):
     data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format(data_name[:-1]), allow_pickle=True)
-    print(data_y.shape)
+    #print(data_y.shape)
     output = [[] for i in range(k)]
     z_raw = []
     for i, one_line in enumerate(label):
@@ -2115,7 +2396,15 @@ if __name__ == "__main__":
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    build_data_x_y_eta(main_path)
+    # dps_label = np.load("test/labels_40.npy", allow_pickle=True)
+    # make_heat_map_data_box(main_path, "test/test_box_zeta.pkl", dps_label, "zeta")
+    # draw_boxplt("test/test_box_zeta.pkl", "test/test_box/", "zeta2", 6, 999)
+    build_data_x_y_iota(main_path)
+    # data_x = load_data(main_path, "data/data_x/data_x_theta1.npy")
+    # print(data_x.shape)
+    # print(data_x)
+
+    # build_data_x_y_eta(main_path)
     # build_data_x_y_zeta(main_path)
     # data_y = np.load(main_path + "data/data_y/data_y_{}.npy".format("zeta"), allow_pickle=True)
     # print(data_y.shape)

@@ -328,8 +328,10 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, int(opt.k), times_count)
     print("Hist built (4/6)")
 
-    triangle_labels = get_triangle_data_x(main_path, output_labels, opt.data, int(opt.k))
-    draw_triangle(triangle_labels, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}.png".format(opt.data, times_count, opt.data, int(opt.k), times_count))
+    triangle_labels_x = get_triangle_data_x(main_path, output_labels, opt.data, int(opt.k))
+    triangle_labels_y = get_triangle_data_y(main_path, output_labels, opt.data, int(opt.k))
+    draw_triangle(triangle_labels_x, "data_x", "saves/{}/{}/triangle_{}_k={}_id={}_data_x.png".format(opt.data, times_count, opt.data, int(opt.k), times_count))
+    draw_triangle(triangle_labels_y, "data_y", "saves/{}/{}/triangle_{}_k={}_id={}_data_y.png".format(opt.data, times_count, opt.data, int(opt.k), times_count))
     print("Triangle built (5/6)")
 
     # print("heat_map_data_inter in train:")
