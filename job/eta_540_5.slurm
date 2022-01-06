@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --job-name="eta_540"
+#SBATCH --job-name="eta_540_5"
 #SBATCH --partition=medium
 #SBATCH --nodes=6
 #SBATCH --time=2-00:00:00
