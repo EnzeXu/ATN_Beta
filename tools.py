@@ -2157,12 +2157,12 @@ def one_time_label_trans(label, k=6):
             count[item[i]] += 1
         for i in range(length - 1):
             count_clear[item[i]] += 1
-    print("all_count =", all_count)
-    print(trans_table)
+    # print("all_count =", all_count)
+    # print(trans_table)
     for i in range(k):
         tmp_sum = sum(trans_table[i])
         for j in range(k):
-            trans_table_string[i][j] = "{0}({1:.1f}%)".format(trans_table[i][j], 100 * trans_table[i][j] / tmp_sum)
+            trans_table_string[i][j] = "{1:.1f}%".format(trans_table[i][j], 100 * trans_table[i][j] / tmp_sum)
     # print(np.asarray(trans_table))
     order_list = [[trans_table[i][i], i] for i in range(k)]
     order_list.sort(key=lambda x: -x[0])
@@ -2397,9 +2397,16 @@ if __name__ == "__main__":
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
     # dps_label = np.load("test/labels_40.npy", allow_pickle=True)
+
+    dps_label = np.load("data/sustain/delta1_final_16_labels.npy", allow_pickle=True)
+    try:
+        one_time_label_trans(dps_label)
+    except Exception as e:
+        print("Skipped:", e)
+
     # make_heat_map_data_box(main_path, "test/test_box_zeta.pkl", dps_label, "zeta")
     # draw_boxplt("test/test_box_zeta.pkl", "test/test_box/", "zeta2", 6, 999)
-    build_data_x_y_iota(main_path)
+    # build_data_x_y_iota(main_path)
     # data_x = load_data(main_path, "data/data_x/data_x_theta1.npy")
     # print(data_x.shape)
     # print(data_x)

@@ -28,11 +28,11 @@ def count_median(lis):
     return mid
 
 def draw_boxplt(input_filename, save_path, data_name, K, times_count):
-    box_pair = [("cluster1", "cluster6"), ("cluster1","cluster2"),("cluster1","cluster3"),("cluster1","cluster4"),
-                ("cluster1","cluster5"),("cluster2","cluster6"),("cluster2","cluster3"),
-                ("cluster2","cluster4"),("cluster2","cluster5"),("cluster3","cluster6"),
-                ("cluster3","cluster4"),("cluster3","cluster5"),("cluster4","cluster6"),
-                ("cluster4","cluster5"),("cluster5","cluster6")]
+    box_pair = [("cluster1", "cluster6"), ("cluster1", "cluster2"), ("cluster1", "cluster3"), ("cluster1", "cluster4"),
+                ("cluster1", "cluster5"), ("cluster2", "cluster6"), ("cluster2", "cluster3"),
+                ("cluster2", "cluster4"), ("cluster2", "cluster5"), ("cluster3", "cluster6"),
+                ("cluster3", "cluster4"), ("cluster3", "cluster5"), ("cluster4", "cluster6"),
+                ("cluster4", "cluster5"), ("cluster5", "cluster6")]
 
     CLINICAL_LABELS = ['EcogPtMem', 'EcogPtLang', 'EcogPtVisspat', 'EcogPtPlan', 'EcogPtOrgan',
                         'EcogPtDivatt', 'EcogPtTotal', 'EcogSPMem', 'EcogSPLang', 'EcogSPVisspat',
