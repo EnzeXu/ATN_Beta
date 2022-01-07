@@ -314,10 +314,14 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=7".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 7)
     draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=14".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 14)
     print("Intra built (2/6)")
-
-    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_14, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
-    draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_2, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/modified_inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
-
+    try:
+        draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_14, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+    except Exception as err:
+        print("Failed in drawing stairs 14:", err)
+    try:
+        draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_2, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/modified_inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+    except Exception as err:
+        print("Failed in drawing stairs 2:", err)
     print("Inter built (3/6)")
 
     box_data_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
