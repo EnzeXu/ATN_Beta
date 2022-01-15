@@ -28,11 +28,11 @@ def count_median(lis):
     return mid
 
 def draw_boxplt(input_filename, save_path, data_name, K, times_count):
-    box_pair = [("cluster1", "cluster6"), ("cluster1", "cluster2"), ("cluster1", "cluster3"), ("cluster1", "cluster4"),
-                ("cluster1", "cluster5"), ("cluster2", "cluster6"), ("cluster2", "cluster3"),
-                ("cluster2", "cluster4"), ("cluster2", "cluster5"), ("cluster3", "cluster6"),
-                ("cluster3", "cluster4"), ("cluster3", "cluster5"), ("cluster4", "cluster6"),
-                ("cluster4", "cluster5"), ("cluster5", "cluster6")]
+    box_pair = [("#1", "#6"), ("#1", "#2"), ("#1", "#3"), ("#1", "#4"),
+                ("#1", "#5"), ("#2", "#6"), ("#2", "#3"),
+                ("#2", "#4"), ("#2", "#5"), ("#3", "#6"),
+                ("#3", "#4"), ("#3", "#5"), ("#4", "#6"),
+                ("#4", "#5"), ("#5", "#6")]
 
     CLINICAL_LABELS = ['EcogPtMem', 'EcogPtLang', 'EcogPtVisspat', 'EcogPtPlan', 'EcogPtOrgan',
                         'EcogPtDivatt', 'EcogPtTotal', 'EcogSPMem', 'EcogSPLang', 'EcogSPVisspat',
@@ -63,9 +63,8 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
         tmp[label[i//14]] = clinical_score[i//14][i%14]
         df_score.append(tmp)
 
-
-    df = pd.DataFrame(df_score,columns=['cluster1','cluster2','cluster3','cluster4','cluster5', 'cluster6'])
-    df["labels"]=df_label
+    df = pd.DataFrame(df_score, columns=["#{}".format(i) for i in range(1, 7)])
+    df["labels"] = df_label
     df["id"] = df_id
     # df = df[df.columns[::-1]]
 
@@ -77,7 +76,9 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
     df.to_csv('{}/dff.csv'.format(save_path), index=False)
     _data = pd.read_csv('{}/dff.csv'.format(save_path))
 
-    for index in range(0, 14):
+    for index in range(7, 14):
+        # if index != 9:
+        #     continue
         data = copy.deepcopy(_data)
         # data = df.copy(deep=True)
         # print(data.columns)
@@ -102,7 +103,7 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
             Q3 = df.quantile(0.75)
             IQR = Q3 - Q1    #IQR is interquartile range. 
             #print((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR)))
-            idx = ~((df < (Q1 - 5 * IQR)) | (df > (Q3 + 5 * IQR))).any(axis=1)
+            idx = ~((df < (Q1 - 2 * IQR)) | (df > (Q3 + 2 * IQR))).any(axis=1)
             #   cat2 = pd.concat([cat.loc[idx]], axis=1)
             #   print(df)
             train_cleaned = pd.concat([df.loc[idx]], axis=1)
@@ -124,7 +125,7 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
         data = pd.concat(data0, axis=0)
         df2 = data.reset_index(drop=True) #sns.boxplot 
 
-        order = ['cluster1','cluster2','cluster3','cluster4','cluster5','cluster6']
+        order = ['#1', '#2', '#3', '#4', '#5', '#6']
 
         ##### 
         means_ = {}
@@ -139,10 +140,12 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
         # print(means_)
         #   print(".",cat2)
         #   df2['Report by'] = cat2   hue='Report by',
-        plt.figure(dpi=120)
-        # print(df2)
-        ax = sns.boxplot(x="name", y="value", data=df2, width=0.5, linewidth=2.0,  palette="Set3",medianprops=dict(color="black")) 
+        fig = plt.figure(dpi=400, figsize=(4, 3))
 
+        # print(df2)
+        #ax = fig.add_subplot(121)
+        ax = sns.boxplot(x="name", y="value", data=df2, width=0.5, linewidth=1.0,  palette="Set3", medianprops=dict(color="black"))
+        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
 
         #####t-test p-value
         dic_ = {}
@@ -152,8 +155,8 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
             label_1 = tup[0]
             label_2 = tup[1]
 
-            box_data1 = df2[df2['name']==label_1].iloc[:,0]
-            box_data2 = df2[df2['name']==label_2].iloc[:,0]
+            box_data1 = df2[df2['name'] == label_1].iloc[:, 0]
+            box_data2 = df2[df2['name'] == label_2].iloc[:, 0]
             stat, pval = stats.ttest_ind(a=box_data1.dropna(), b=box_data2.dropna())
             result = StatResult(
                     't-test independent samples', 't-test_ind', 'stat', stat, pval
@@ -194,21 +197,23 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
         #####print
         s_total = ''
         for j in dic_order:
-            s = j[0] + ' v.s. ' + j[1] + ' : ' + str(format(dic_[j],'.3e'))
+            s = j[0] + ' VS. ' + j[1] + ' : ' + str(format(dic_[j], '.3e'))
             if s_total == '':
                 s_total = s
             else:
-                s = '\n\n' + s
+                s = '\n' + s
                 s_total += s
-
+        print(title)
+        print(s_total)
         ylim = ax.get_ylim()
         # print(ylim)
         yrange = ylim[1] - ylim[0]
         xlim = ax.get_xlim()
         #   ax.set_ylim([0, 5])
         bbox = dict(boxstyle="round", fc="1")
-        ax.text(x=1.02, y=0.02, fontsize=7, transform=ax.transAxes, bbox=bbox, s=s_total)
-        plt.title(title, fontsize=20)
+        ax.text(x=1.06, y=0.03, fontsize=10, transform=ax.transAxes, bbox=bbox, s=s_total)
+        #plt.figure(dpi=400, figsize=(4, 3))
+        plt.title(title, fontsize=16, x=1.0)
         #   plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0, title='Report by')
         # plt.xticks(rotation=90)
         for tick in ax.xaxis.get_major_ticks():
@@ -219,12 +224,13 @@ def draw_boxplt(input_filename, save_path, data_name, K, times_count):
         #ax.set(yticklabels=[])
         ax.set(ylabel=None)
         ax.set(xlabel=None)
-        plt.subplots_adjust(right=0.73)
+        plt.subplots_adjust(right=0.7)
         
         out_path = save_path + "hist_{}_k={}_id={}_{}".format(data_name, K, times_count, i_)
-        plt.savefig(out_path, dpi=400)
-        # plt.show()
+        plt.savefig(out_path, dpi=400, bbox_inches="tight")
+        plt.show()
         plt.clf()
+
     print("Drawing 7 dist plots on {} successfully".format(save_path))
     #   print(label)
 

@@ -10,3 +10,4 @@ sklearn
 scipy
 seaborn
 statannot
+scikit_posthocs

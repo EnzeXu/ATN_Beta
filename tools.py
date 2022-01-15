@@ -5,6 +5,7 @@ import time
 import os
 import platform
 import pickle
+import scikit_posthocs
 import shutil
 import numpy as np
 import pandas as pd
@@ -22,6 +23,8 @@ from sklearn.metrics.cluster import contingency_matrix
 from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import MinMaxScaler
+from sklearn import metrics
+from sklearn.metrics import pairwise_distances
 
 from strings import CLINICAL_LABELS, DATA_SETS
 from box_adjusted import draw_boxplt
@@ -424,32 +427,43 @@ def draw_stairs_2(data1, data2, save_path, threshold=0.05):
         # plt.show()
 
 
-def draw_stairs_3(data1, data2, data3, save_path, threshold=0.05):
-    k = len(data1)
-    for i, one_target in enumerate(CLINICAL_LABELS):
+def draw_stairs_3(data1, data2, data3, save_path, threshold=0.05, flag=False, show_flag=False):
+    k = np.asarray(data1).shape[1] + 1
+    # print(data1)
+    # print(np.asarray(data1).shape)
+    stair_labels = CLINICAL_LABELS
+    if flag:
+        stair_labels = ["MMSE", "CDRSB", "ADAS"]
+    for i, one_target in enumerate(stair_labels):
         k1 = np.asarray(copy.deepcopy(data1[i]))
         k2 = np.asarray(copy.deepcopy(data2[i]))
         k3 = np.asarray(copy.deepcopy(data3[i]))
         # print(k1.shape, k2.shape, k3.shape)
+        k1_count = 0
         for j in range(len(k1)):
             for l in range(len(k1[j])):
                 if k1[j][l] <= threshold:
                     k1[j][l] = 1
+                    k1_count += 1
                 else:
                     k1[j][l] = np.nan
+        k2_count = 0
         for j in range(len(k2)):
             for l in range(len(k2[j])):
                 if k2[j][l] <= threshold:
                     k2[j][l] = 1
+                    k2_count += 1
                 else:
                     k2[j][l] = np.nan
+        k3_count = 0
         for j in range(len(k3)):
             for l in range(len(k3[j])):
                 if k3[j][l] <= threshold:
                     k3[j][l] = 1
+                    k3_count += 1
                 else:
                     k3[j][l] = np.nan
-
+        print(k1_count, k2_count, k3_count)
         ylabels = range(2, k + 1)  # [2, 3, 4, 5]
         xlabels = range(1, k)  # [1, 2, 3, 4]
         v_lines = [[-0.5, -0.5, k - 1.5]] + [[0.5 + i, -0.5 + i, k - 1.5] for i in range(k - 2)] + [[k - 1.505, k - 2.5, k - 1.5]]
@@ -485,7 +499,7 @@ def draw_stairs_3(data1, data2, data3, save_path, threshold=0.05):
         ax.imshow(k2, cmap=plt.cm.Reds, vmin=0, vmax=1.5)
 
         ax = fig.add_subplot(133)
-        ax.set_title("DPS-Net")
+        ax.set_title("MSSN")
         ax.set_xticks(np.arange(0, k - 1, 1))
         ax.set_xticklabels(xlabels)
         ax.set_yticks(np.arange(0, k - 1, 1))
@@ -501,7 +515,9 @@ def draw_stairs_3(data1, data2, data3, save_path, threshold=0.05):
         plt.suptitle("Inter-cluster difference [{}]".format(one_target))
         plt.tight_layout()
         plt.savefig("{}_{}.png".format(save_path, one_target), dpi=400)
-        # plt.show()
+        if show_flag:
+            plt.show()
+        plt.clf()
         # break
 
 
@@ -684,11 +700,24 @@ def get_heat_map_data_inter(main_path, K, label, data_type, flag=False):
 
     data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
     target_labels = CLINICAL_LABELS
-    data = data[["PTID", "EXAMDATE"] + target_labels + ["CDRSB", "ADAS13"]]
+    data = data[["PTID", "EXAMDATE"] + target_labels + ["MMSE", "CDRSB", "ADAS13"]]
     data = data[pd.notnull(data["EcogPtMem"])]
 
-    for one_label in target_labels:
+
+
+    for one_label in (target_labels + ["MMSE", "CDRSB", "ADAS13"]):
         data[one_label] = fill_nan(data[one_label])
+
+    # scores = data[(target_labels + ["MMSE", "CDRSB", "ADAS13"])]
+    # scaler = MinMaxScaler(feature_range=(0, 1))
+    # rescaledX = scaler.fit_transform(scores)
+    # np.set_printoptions(precision=3)  # Setting precision for the output
+    # scores = rescaledX
+    # scores = pd.DataFrame(scores)
+    # scores.columns = target_labels + ["MMSE", "CDRSB", "ADAS13"]
+    # for one_target_label in target_labels + ["MMSE", "CDRSB", "ADAS13"]:
+    #     data[one_target_label] = scores[one_target_label]
+
     label_match = []
     for j, one_pt_id in enumerate(pt_ids):
         for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
@@ -702,13 +731,13 @@ def get_heat_map_data_inter(main_path, K, label, data_type, flag=False):
         for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
             tmp = []
             if flag:
-                target_labels = ["CDRSB", "ADAS13"]
+                target_labels = ["MMSE", "CDRSB", "ADAS13"]  # ["CDRSB", "ADAS13"]
             for one_target_label in target_labels:
                 tmp.append(float(data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][one_target_label].values[0]))
             x_inter.append(tmp)
 
     bad_result = np.asarray([np.nan] * (len(CLINICAL_LABELS) * (K - 1) ** 2)).reshape((len(CLINICAL_LABELS), K - 1, K - 1))
-
+    print("x_inter=\n", x_inter)
     for j in range(K):
         tmp = []
         for i in range(len(label_match)):
@@ -718,13 +747,14 @@ def get_heat_map_data_inter(main_path, K, label, data_type, flag=False):
             print("bad in drawing inter_cluster map")
             return 1, bad_result
         dt.append(tmp)
+    print("dt=\n", dt)
     # with open("dt_gamma2_kmeans_seed_12.pkl", "wb") as f:
     #     pickle.dump(dt, f)
     for i in range(1, K):
         for j in range(0, K - 1):
             # if j > i:
             matrix.append(stats.ttest_ind(dt[i], dt[j])[1])
-
+    print("matrix=\n", matrix)
     matrix = np.asarray(matrix).swapaxes(0, 1)
     for item in matrix:
         # tmp = item
@@ -2132,7 +2162,7 @@ def one_time_draw_3(main_path):
     return
 
 
-def parse_flatten(flatten_labels, data_type):
+def parse_flatten(main_path, flatten_labels, data_type):
     pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     pt_dic = load_patient_dictionary(main_path, data_type)
     normal_labels = []
@@ -2145,7 +2175,7 @@ def parse_flatten(flatten_labels, data_type):
     return normal_labels
 
 
-def one_time_label_trans(label, index=0, k=6):
+def one_time_label_trans(label, index=None, k=6, raw_flag=False):
     trans_table = [[0] * k for i in range(k)]
     trans_table_string = [[""] * (k + 1) for i in range(k)]
     count = [0] * k
@@ -2169,7 +2199,11 @@ def one_time_label_trans(label, index=0, k=6):
     # print(np.asarray(trans_table))
     order_list = [[trans_table[i][i], i] for i in range(k)]
     order_list.sort(key=lambda x: -x[0])
-    order = [item[1] for item in order_list]
+    if not raw_flag:
+        order = [item[1] for item in order_list]
+    else:
+        order = range(0, k)
+    #print(order)
     trans_table_ordered = [[""] * k for i in range(k)]
     for i in range(k):
         for j in range(k):
@@ -2396,21 +2430,288 @@ def draw_triangle(labels, label_type, save_path, show_flag=False):
         plt.show()
 
 
+def build_table_data(main_path, label, data_name):
+    pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+    pt_dic = load_patient_dictionary(main_path, data_name[:-1])
+    #
+    # data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+    # target_labels = CLINICAL_LABELS
+    # data = data[["PTID", "EXAMDATE"] + target_labels + ["CDRSB", "ADAS13"]]
+    # data = data[pd.notnull(data["EcogPtMem"])]
+    #
+    # for one_label in target_labels:
+    #     data[one_label] = fill_nan(data[one_label])
+    label_match = []
+    for j, one_pt_id in enumerate(pt_ids):
+        for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            label_match.append(label[j][k])
+    data_x = load_data(main_path, "data/data_x/data_x_{}.npy".format(data_name))
+    x_inter = []
+
+    for j, one_pt_id in enumerate(pt_ids):
+        for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+            # tmp = []
+            # target_labels = target_labels[:7]
+            # for one_target_label in target_labels:
+            #     tmp.append(float(data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][
+            #                          one_target_label].values[0]))
+            x_inter.append(data_x[j][k])
+
+    x_inter = np.array(x_inter)
+    # print(np.shape(x_inter))
+    # print(x_inter)
+    # print(label_match)
+    result = dict()
+    result["sc"] = metrics.silhouette_score(x_inter, label_match, metric='euclidean')
+    result["chi"] = metrics.calinski_harabasz_score(x_inter, label_match)
+    result["dbi"] = metrics.davies_bouldin_score(x_inter, label_match)
+    result["di"] = my_dunn_index(x_inter, label_match)
+    for one_type in ["sc", "chi", "dbi", "di"]:
+        print("%.6f\t" % result[one_type], end="")
+    print()
+    return result
+
+
+def euclidean_dist(vec1, vec2):
+    return np.linalg.norm(np.asarray(vec1) - np.asarray(vec2))
+
+
+def my_dunn_index(x, label):
+    inner_max = -1
+    outer_min = 99999999
+    for i in range(len(x)):
+        for j in range(i + 1, len(x)):
+            if label[i] == label[j]:
+                inner_max = max(inner_max, euclidean_dist(x[i], x[j]))
+            else:
+                outer_min = min(outer_min, euclidean_dist(x[i], x[j]))
+                if euclidean_dist(x[i], x[j]) == 0:
+                    print("label id = {} label = {} x = {}".format(i, label[i], x[i]))
+                    print("label id = {} label = {} x = {}".format(j, label[j], x[j]))
+                    print()
+    return outer_min / inner_max
+
+
+def entropy(pickle_file_path, output_folder_path):
+    with open(pickle_file_path, "rb") as f:
+        mydict = pickle.load(f)
+
+    id, label, clinical_score = [], [], []
+    for i, (k, v) in enumerate(mydict.items()):
+        id.append(k)
+        label.append(v["label"])
+        clinical_score.append(v["clinical"])
+
+    tmp = []
+    df_id, df_label, df_label2, df_score = [], [], [], []
+    for i in range(len(label) * 14):
+        df_id.append(id[i // 14])
+        df_label.append(label[i // 14])
+        df_score.append(clinical_score[i // 14])
+        if label[i // 14] == 1:
+            tmp.append(clinical_score[i // 14][1])
+
+    df = pd.DataFrame(df_score, columns=CLINICAL_LABELS)
+    df["labels"] = df_label
+    df["id"] = df_id
+
+    df.to_csv(output_folder_path + "df.csv", index=False)
+    tmp = pd.DataFrame(tmp)
+    tmp.to_csv(output_folder_path + "tmp.csv", index=False)
+    print(len(tmp), tmp)
+
+
+def my_order(raw):
+    raw = [[item, i] for i, item in enumerate(raw)]
+    raw.sort(key=lambda x: x[0])
+    raw = [[item[1], i] for i, item in enumerate(raw)]
+    raw.sort(key=lambda x: x[0])
+    return [item[1] for item in raw]
+
+
+def one_time_score_step(matrix):
+    tmp = 0
+    for line in matrix:
+        if len(set(line)) == 1:
+            tmp += 0
+        elif len(set(line)) == 2:
+            tmp += 1
+        else:
+            tmp += 3
+    return tmp
+
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)
     # print(pt_ids)
     main_path = os.path.dirname(os.path.abspath("__file__")) + "/"
-    # dps_label = np.load("test/labels_40.npy", allow_pickle=True)
-    for i in [7,24,27,28,29,30,34,36,37,40,42,50]:
-        dps_label = np.load("/Users/enze/Downloads/from termius/zeta2_k=6_50_epoch=3000/zeta2/{0}/labels_{0}.npy".format(i), allow_pickle=True)
-        try:
-            one_time_label_trans(dps_label, i)
-        except Exception as e:
-            print("{}\tSkipped:".format(i), e)
+    # # dps_label = np.load("test/labels_40.npy", allow_pickle=True)
+    # for i in [7,24,27,28,29,30,34,36,37,40,42,50]:
+    #     dps_label = np.load("/Users/enze/Downloads/from termius/zeta2_k=6_50_epoch=3000/zeta2/{0}/labels_{0}.npy".format(i), allow_pickle=True)
+    #     try:
+    #         one_time_label_trans(dps_label, i)
+    #     except Exception as e:
+    #         print("{}\tSkipped:".format(i), e)
+    # dps_label = np.load("/Users/enze/Downloads/from termius/zeta2_k=6_50_epoch=3000/zeta2/7/labels_7.npy",
+    #                     allow_pickle=True)
+    # l = []
+    eta_paths = [
+        "data=eta1_alpha=1e-05_beta=0.1_h_dim=8_main_epoch=1000",
+        "data=eta1_alpha=1e-05_beta=0.01_h_dim=8_main_epoch=1000",
+        "data=eta1_alpha=1e-05_beta=0.001_h_dim=8_main_epoch=1000",
+        "data=eta2_alpha=1e-05_beta=1.0_h_dim=8_main_epoch=1000",
+        "data=eta2_alpha=1e-05_beta=0.1_h_dim=8_main_epoch=1000",
+        "data=eta2_alpha=1e-05_beta=0.01_h_dim=8_main_epoch=1000"
+    ]
+    # dps_label = np.load("/Users/enze/Downloads/from termius/{0}/{1}/{2}/labels_{2}.npy".format(eta_paths[1], eta_paths[1], 14),
+    #                     allow_pickle=True)
+    # _, heat_map_data_inter = get_heat_map_data_inter(main_path, 6, dps_label, "eta", True)
+    # draw_stairs_3(heat_map_data_inter, heat_map_data_inter, heat_map_data_inter, "test/final_figure_inter", 0.05, True, True)
 
-    # make_heat_map_data_box(main_path, "test/test_box_zeta.pkl", dps_label, "zeta")
-    # draw_boxplt("test/test_box_zeta.pkl", "test/test_box/", "zeta2", 6, 999)
+
+    #
+    # flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    # sustain_label = parse_flatten(flatten_label, "delta")
+    # _, heat_map_data_inter_sustain = get_heat_map_data_inter(main_path, 6, sustain_label, "eta", True)
+    # for path_id, one_path in enumerate(eta_paths):
+    #     if path_id != 2:
+    #         continue
+    #     data_x_raw = load_data(main_path, "/data/data_x/data_x_{}_raw.npy".format(one_path[5:9]))
+    #     kmeans_labels = get_kmeans_base(data_x_raw, 0, 6)
+    #     _, heat_map_data_inter_kmeans = get_heat_map_data_inter(main_path, 6, kmeans_labels, "eta", True)
+    #     for i in range(20):
+    #         i += 1
+    #         if i != 14:
+    #             continue
+    #         dps_label = np.load("/Users/enze/Downloads/from termius/{0}/{1}/{2}/labels_{2}.npy".format(one_path, one_path, i), allow_pickle=True)
+    #         try:
+    #             #one_time_label_trans(dps_label, "{0}/{1}/".format(one_path, i), 6, True)
+    #             _, heat_map_data_inter_dps = get_heat_map_data_inter(main_path, 6, dps_label, "eta", False)
+    #             print(heat_map_data_inter_dps)
+    #             output_folder_path = "test/figure_inter_eta_normed_14/{0}/{1}/".format(one_path, i)
+    #             if not os.path.exists(output_folder_path):
+    #                 os.makedirs(output_folder_path)
+    #             draw_stairs_3(heat_map_data_inter_kmeans, heat_map_data_inter_sustain, heat_map_data_inter_dps, output_folder_path + "inter",
+    #                           0.05, False, False)
+    #         except Exception as e:
+    #             print("{}\t".format("{0}/{1}/".format(one_path, i)), end="")
+    #             print(e)
+    #     print("\n\n")
+
+
+            # pkl_path = "/Users/enze/Downloads/from termius/{0}/{1}/{2}/dist/box_data_{3}_k=6_id={2}.pkl".format(
+            #     one_path, one_path, i, one_path[5: 9])
+            # output_folder_path = "test/entropy_eta/{0}/{1}/".format(one_path, i)
+            # if not os.path.exists(output_folder_path):
+            #     os.makedirs(output_folder_path)
+            # try:
+            #     print("id = ", i)
+            #     # build_table_data(pkl_path, dps_label, "eta1")
+            #     entropy(pkl_path, output_folder_path)
+            # except Exception as e:
+            #     print(e)
+
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_{}_raw.npy".format("gamma4"))
+    # for i in range(0, 5):
+    #     print("seed =", i)
+    #
+    #     kmeans_labels = get_kmeans_base(data_x_raw, i, 6)
+    #     _, heat_map_data_inter_kmeans = get_heat_map_data_inter(main_path, 6, kmeans_labels, "eta", True)
+    #     draw_stairs_3(heat_map_data_inter_kmeans, heat_map_data_inter_kmeans, heat_map_data_inter_kmeans,
+    #                   "test/trash/pic_2_{}".format(i),
+    #                   0.05, True, False)
+
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_zeta1_raw.npy")
+    # kmeans_label = get_kmeans_base(data_x_raw, 0, 6)
+    # np.save("test/kmeans_zeta1_labels.npy", kmeans_label, allow_pickle=True)
+    # print(kmeans_label)
+    # flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    #
+    # print([list(flatten_label).count(item) for item in range(6)])
+    # # build_table_data(main_path, sustain_label, "delta1")
+    # kmeans_label = np.load("test/kmeans_zeta1_labels.npy", allow_pickle=True)
+    # kmeans_label_all = []
+    # for item in kmeans_label:
+    #     kmeans_label_all += list(item)
+    #
+    #
+    # print([list(kmeans_label_all).count(item) for item in range(6)])
+    # build_table_data(main_path, kmeans_label, "zeta1")
+    # kmeans_label = np.load("test/kmeans_zeta1_labels.npy", allow_pickle=True)
+    # flatten_label = np.load("test/sustain/delta1_final_16.npy")
+    # sustain_label = parse_flatten(main_path, flatten_label, "delta")
+
+    for path_id, one_path in enumerate(eta_paths):
+        for z in range(20):
+            z += 1
+            dps_label = np.load("/Users/enze/Downloads/from termius/{0}/{1}/{2}/labels_{2}.npy".format(one_path, one_path, z), allow_pickle=True)
+            # dps_label = np.load("/Users/enze/Downloads/from termius/data=eta2_alpha=1e-05_beta=0.1_h_dim=8_main_epoch=1000/data=eta2_alpha=1e-05_beta=0.1_h_dim=8_main_epoch=1000/9/labels_9.npy", allow_pickle=True)
+            # dps_label = np.load(
+            #     "/Users/enze/Downloads/from termius/data=eta1_alpha=1e-05_beta=0.01_h_dim=8_main_epoch=1000/data=eta1_alpha=1e-05_beta=0.01_h_dim=8_main_epoch=1000/14/labels_14.npy",
+            #     allow_pickle=True)
+            data_type = "eta"
+            label = dps_label
+            K = 6
+            pt_ids = np.load("data/ptid.npy", allow_pickle=True)
+            pt_dic = load_patient_dictionary(main_path, data_type)
+
+            data = pd.read_excel(main_path + 'data/MRI_information_All_Measurement.xlsx', engine=get_engine())
+            target_labels = CLINICAL_LABELS
+            data = data[["PTID", "EXAMDATE"] + target_labels + ["MMSE", "CDRSB", "ADAS13"]]
+            data = data[pd.notnull(data["EcogPtMem"])]
+
+            for one_label in target_labels:
+                data[one_label] = fill_nan(data[one_label])
+            # print(data["MMSE"])
+            # print(data["CDRSB"])
+            # print(data["ADAS13"])
+            result = []
+
+            for i in range(K):
+                dic = dict()
+                for one_target_label in ["MMSE", "CDRSB", "ADAS13"]:
+                    dic[one_target_label] = []
+                for j, one_pt_id in enumerate(pt_ids):
+                    for k, one_exam_date in enumerate(pt_dic.get(one_pt_id)):
+                        if label[j][k] == i:
+                            for one_target_label in ["MMSE", "CDRSB", "ADAS13"]:
+                                tmp = data.loc[(data["PTID"] == one_pt_id) & (data["EXAMDATE"] == one_exam_date)][
+                                    one_target_label].values[0]
+                                dic[one_target_label] += [float(tmp)]
+
+                #tmp_var = [np.var(np.asarray(dic[one_target_label])) for one_target_label in target_labels]
+                tmp_avg = [np.nanmean(np.asarray(dic[one_target_label])) for one_target_label in ["MMSE", "CDRSB", "ADAS13"]]
+                result.append(list(tmp_avg))
+            try:
+                result_col = []
+                for i in range(3):
+                    one_order = my_order([item[i] for item in result])
+                    result_col.append(one_order)
+                result_row = []
+                for i in range(6):
+                    result_row.append([item[i] for item in result_col])
+                score = one_time_score_step(result_row)
+                print(one_path, z, score)
+                if score < 10:
+                    for line in result_row:
+                        for item in line:
+                            print("%d\t" % item, end="")
+                        print()
+                    # print(result_row)
+            except:
+                pass
+    # for i in range(3):
+    #     one_order = my_order([item[i] for item in result])
+    #     for item in one_order:
+    #         print(item)
+    #     print()
+
+    # # build_table_data(main_path, dps_label, "delta1")
+    #
+    # # print(max(l))
+    # make_heat_map_data_box(main_path, "test/test_box_zeta.pkl", dps_label, "eta")
+    # draw_boxplt("test/test_box_zeta.pkl", "test/test_box/", "eta1", 6, 999)
     # build_data_x_y_iota(main_path)
     # data_x = load_data(main_path, "data/data_x/data_x_theta1.npy")
     # print(data_x.shape)
@@ -2481,7 +2782,7 @@ if __name__ == "__main__":
     # build_data_x_y_gamma(main_path)
     # data_y = load_data(main_path, "/data/data_y/data_y_delta.npy")
     # print(data_y[46][0])
-    # data_x_raw = load_data(main_path, "/data/data_x/data_x_delta1_raw.npy")
+    # data_x_raw = load_data(main_path, "/data/data_x/data_x_eta2_raw.npy")
     # data = []
     # for item in data_x_raw:
     #     for line in item:
@@ -2490,7 +2791,7 @@ if __name__ == "__main__":
     #
     # print(data.shape)
     # print(data[0])
-    # np.save("test/sustain_delta1.npy", data, allow_pickle=True)
+    # np.save("test/sustain_eta2.npy", data, allow_pickle=True)
 
     # # label = np.load("test/labels_alpha2_k=5_2.npy", allow_pickle=True)
     # # # one_time_heat_map_data_box(main_path, 6, label, "delta")
