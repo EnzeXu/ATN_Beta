@@ -233,6 +233,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
 
     if print_flag:
         print("[{:0>4d}][Step 8] Saving".format(times_count))
+    if not os.path.exists(save_path + '/models/model_K{}'.format(K)):
+        os.makedirs(save_path + '/models/model_K{}'.format(K))
     saver.save(sess, save_path + '/models/model_K{}'.format(K))
     save_logging(network_settings, save_path + '/models/network_settings_K{}.txt'.format(K))
     ##### np.savez(save_path + 'models/embeddings.npz', e=e)
