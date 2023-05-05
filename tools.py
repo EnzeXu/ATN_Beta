@@ -691,7 +691,7 @@ def one_time_draw_tsne():
     # print([len(item) for item in data_plot])
     color_types = ["red", "cyan", "blue", "green", "orange", "yellow", "magenta"]
     for i, point in enumerate(data):
-        plt.4r53scatter(point[0], point[1], s=5, c=color_types[colors[i]])
+        plt.scatter(point[0], point[1], s=5, c=color_types[colors[i]])
     plt.show()
 
 
