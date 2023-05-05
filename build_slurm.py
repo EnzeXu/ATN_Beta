@@ -61,7 +61,7 @@ def one_time_build_slurm():
     # --num 20 --data eta1 --k 6 --kmeans 1 --main_epoch 1000 --alpha 0.00001 --beta 1 --h_dim 8
     # num / alpha / h_dim / keep_prob
     plans = [
-        [5, 0.00001, 8, 0.7],
+        [2, 0.00001, 8, 0.7],
     ]
     for one_plan in plans:
         dic = dict()

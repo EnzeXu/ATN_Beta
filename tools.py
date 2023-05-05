@@ -2542,6 +2542,12 @@ def one_time_score_step(matrix):
     return tmp
 
 
+from datetime import datetime
+
+
+def get_now_string(timestring_format="%Y-%m-%d %H:%M:%S.%f"):
+    return datetime.now().strftime(timestring_format)
+
 if __name__ == "__main__":
     # warnings.filterwarnings("ignore")
     # pt_ids = np.load("data/ptid.npy", allow_pickle=True)

@@ -11,6 +11,16 @@ from box_adjusted import draw_boxplt
 
 
 def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, base_res_inter, print_flag=True):
+    save_log_dic = dict()
+    save_log_dic["id"] = times_count
+    save_log_dic["time_start"] = get_now_string()
+    save_log_dic["time_string"] = parameters.get("time_string")
+    save_log_dic_t0 = time.time()
+    save_log_dic["alpha"] = parameters.get("alpha")
+    save_log_dic["beta"] = parameters.get("beta")
+    save_log_dic["keep_prob"] = parameters.get("keep_prob_s4")
+    save_log_dic["h_dim"] = parameters.get("h_dim_FC")
+
     if print_flag:
         print("[{:0>4d}][Step 1] Loading data".format(times_count))
     # data_x = load_data(main_path, "/data/data_x_new.npy")
@@ -103,6 +113,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
             val_loss = np.sum((y_true - y_pred) ** 2, axis=-1)
             avg_val_loss = np.mean(val_loss)
             print("ITR {:05d}: loss_train={:.3f} loss_val={:.3f}".format(itr + 1, avg_loss, avg_val_loss))
+            save_log_dic["network_avg_loss"] = avg_loss
+            save_log_dic["network_avg_val_loss"] = avg_val_loss
             avg_loss = 0
     saver.save(sess, save_path + 'models/model_K{}'.format(K))
     save_logging(network_settings, save_path + 'models/network_settings_K{}.txt'.format(K))
@@ -199,6 +211,14 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
                 itr + 1, avg_loss_c_L1, avg_loss_a_L1, avg_loss_e_L1, avg_loss_a_L2, avg_loss_e_L3,
                 va_avg_loss_L1, va_avg_loss_L2, va_avg_loss_L3)
             print(tmp_line)
+            save_log_dic["avg_loss_c_L1"] = avg_loss_c_L1
+            save_log_dic["avg_loss_a_L1"] = avg_loss_a_L1
+            save_log_dic["avg_loss_a_L2"] = avg_loss_a_L2
+            save_log_dic["avg_loss_e_L1"] = avg_loss_e_L1
+            save_log_dic["avg_loss_e_L3"] = avg_loss_e_L3
+            save_log_dic["va_avg_loss_L1"] = va_avg_loss_L1
+            save_log_dic["va_avg_loss_L2"] = va_avg_loss_L2
+            save_log_dic["va_avg_loss_L3"] = va_avg_loss_L3
             avg_loss_c_L1 = 0
             avg_loss_a_L1 = 0
             avg_loss_a_L2 = 0
@@ -346,6 +366,33 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     if int(opt.clear) == 1:
         shutil.rmtree("saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count))
         print("Removed folder {} after training (6/6)".format("saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/proposed".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count)))
+
+    save_log_dic["time_end"] = get_now_string()
+    save_log_dic["time_cost"] = (time.time() - save_log_dic_t0) / 60.0
+
+    with open("record/record_log.csv", "w") as f:
+        f.write("{0},{1},{2},{3},{4},{5:.9f},{6},{7},{8},{9:.12f},{10:.12f},{11:.12f},{12:.12f},{13:.12f},{14:.12f},{15:.12f},{16:.12f},{17:.12f},{18:.12f}\n".format(
+            save_log_dic["time_string"],  # 0
+            save_log_dic["time_start"],  # 1
+            save_log_dic["time_end"],  # 2
+            save_log_dic["time_cost"],  # 3
+            save_log_dic["id"],  # 4
+            save_log_dic["alpha"],  # 5
+            save_log_dic["beta"],  # 6
+            save_log_dic["h_dim"],  # 7
+            save_log_dic["keep_prob"],  # 8
+            save_log_dic["network_avg_loss"],  # 9
+            save_log_dic["network_avg_val_loss"],  # 10
+            save_log_dic["avg_loss_c_L1"],  # 11
+            save_log_dic["avg_loss_a_L1"],  # 12
+            save_log_dic["avg_loss_a_L2"],  # 13
+            save_log_dic["avg_loss_e_L1"],  # 14
+            save_log_dic["avg_loss_e_L3"],  # 15
+            save_log_dic["va_avg_loss_L1"],  # 16
+            save_log_dic["va_avg_loss_L2"],  # 17
+            save_log_dic["va_avg_loss_L3"],  # 18
+        ))
+
     return judge, judge_params, distribution_string
 
 
@@ -411,7 +458,8 @@ if __name__ == "__main__":
         'check_step_s6': 1000,        # 1000
         # [Step 7] Training main algorithm
         'iteration_s7': int(opt.main_epoch),       # 5000
-        'check_step_s7': 100          # 100
+        'check_step_s7': 100,          # 100
+        "time_string": get_now_string(timestring_format="%Y%m%d_%H%M%S_%f"),
     }
     print(json.dumps(params, indent=4, ensure_ascii=False))
     start(params, opt)
