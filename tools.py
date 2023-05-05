@@ -884,11 +884,15 @@ def build_kmeans_result(main_path, opt, kmeans_labels, data_name, k):
 
 
 def get_start_index(main_path, opt):
-    df = pd.read_csv(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), opt.data))
-    # print(list(df["Id"]))
-    start_index = max([int(item) for item in list(df["Id"])]) + 1
-    # print(start_index)
-    start_index = max(start_index, 1)
+    try:
+        df = pd.read_csv(main_path + "record/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/record_{}.csv".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), opt.data))
+        # print(list(df["Id"]))
+        start_index = max([int(item) for item in list(df["Id"])]) + 1
+        # print(start_index)
+        start_index = max(start_index, 1)
+    except Exception as e:
+        print(e)
+        start_index = 1
     return start_index
 
 
