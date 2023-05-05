@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for alpha in "0.0001" "1e-5" "1e-6"
+for alpha in "0.0001" "1e-05" "1e-06"
 do
     for h_dim in "7" "8" "9"
     do
