@@ -383,6 +383,7 @@ if __name__ == "__main__":
     parser.add_argument("--alpha", default=0.00001, help="alpha parameter in model (not dataset names)")
     parser.add_argument("--beta", default=0.1, help="beta parameter in model (not dataset names)")
     parser.add_argument("--h_dim", default=8, help="h_dim_FC & h_dim_RNN")
+    parser.add_argument("--keep_prob", default=0.7, help="keep_prob")
     opt = parser.parse_args()
     params = {
         # [Step 2] Define network parameters
@@ -402,7 +403,7 @@ if __name__ == "__main__":
         'alpha': float(opt.alpha),    # 0.00001
         'beta': float(opt.beta),      # 1
         'mb_size_s4': 32,             # 8
-        'keep_prob_s4': 0.7,          # 0.7
+        'keep_prob_s4': float(opt.keep_prob),          # 0.7
         'lr_rate1': 0.0001,           # 0.0001
         'lr_rate2': 0.0001,           # 0.0001
         # [Step 6] Initializing embedding & selector
