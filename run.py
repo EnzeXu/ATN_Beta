@@ -167,6 +167,7 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         avg_loss_s += tmp_loss_s / check_step
         if (itr + 1) % check_step == 0:
             print("ITR:{:04d} | Loss_s:{:.4f}".format(itr + 1, avg_loss_s))
+            save_log_dic["embedding_avg_loss_s"] = avg_loss_s
             avg_loss_s = 0
     tmp_ybars = model.predict_yy(np.tanh(e))
     new_e = np.copy(e)
@@ -323,41 +324,46 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
         )
         f.write(string)
     # print(output_labels)
-    print("Labels ready (0/6)")
+
+    skip_all_plot_flag = True
+
     heat_map_data = get_heat_map_data(main_path, int(opt.k), output_labels, opt.data[:-1])
     _, heat_map_data_inter_14 = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1], False)
     _, heat_map_data_inter_2 = get_heat_map_data_inter(main_path, int(opt.k), output_labels, opt.data[:-1], True)
-    sustain_intra = get_static_sustain(main_path, "intra")
-    sustain_inter = get_static_sustain(main_path, "inter")
-    print("Heat map data are built (1/6)")
 
-    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=7".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 7)
-    draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=14".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 14)
-    print("Intra built (2/6)")
-    try:
-        draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_14, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
-    except Exception as err:
-        print("Failed in drawing stairs 14:", err)
-    try:
-        draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_2, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/modified_inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
-    except Exception as err:
-        print("Failed in drawing stairs 2:", err)
-    print("Inter built (3/6)")
+    if not skip_all_plot_flag:
+        print("Labels ready (0/6)")
+        sustain_intra = get_static_sustain(main_path, "intra")
+        sustain_inter = get_static_sustain(main_path, "inter")
+        print("Heat map data are built (1/6)")
 
-    box_data_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
-    box_data_dist_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
-    if not os.path.exists(main_path + box_data_dist_save_path):
-        os.makedirs(main_path + box_data_dist_save_path)
+        draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=7".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 7)
+        draw_heat_map_3(base_res, sustain_intra, heat_map_data, "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/intra_cluster_id={}_cols=14".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count), 2, False, 14)
+        print("Intra built (2/6)")
+        try:
+            draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_14, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+        except Exception as err:
+            print("Failed in drawing stairs 14:", err)
+        try:
+            draw_stairs_3(base_res_inter, sustain_inter, heat_map_data_inter_2, main_path + "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/modified_inter_cluster_id={}".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, times_count))
+        except Exception as err:
+            print("Failed in drawing stairs 2:", err)
+        print("Inter built (3/6)")
 
-    make_heat_map_data_box(main_path, box_data_save_path, output_labels, opt.data[:-1])
-    draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, int(opt.k), times_count)
-    print("Hist built (4/6)")
+        box_data_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/box_data_{}_k={}_id={}.pkl".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
+        box_data_dist_save_path = "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/dist/".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count)
+        if not os.path.exists(main_path + box_data_dist_save_path):
+            os.makedirs(main_path + box_data_dist_save_path)
 
-    triangle_labels_x = get_triangle_data_x(main_path, output_labels, opt.data, int(opt.k))
-    triangle_labels_y = get_triangle_data_y(main_path, output_labels, opt.data, int(opt.k))
-    draw_triangle(triangle_labels_x, "data_x", "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/triangle_{}_k={}_id={}_data_x.png".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count))
-    draw_triangle(triangle_labels_y, "data_y", "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/triangle_{}_k={}_id={}_data_y.png".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count))
-    print("Triangle built (5/6)")
+        make_heat_map_data_box(main_path, box_data_save_path, output_labels, opt.data[:-1])
+        draw_boxplt(main_path + box_data_save_path, main_path + box_data_dist_save_path, opt.data, int(opt.k), times_count)
+        print("Hist built (4/6)")
+
+        triangle_labels_x = get_triangle_data_x(main_path, output_labels, opt.data, int(opt.k))
+        triangle_labels_y = get_triangle_data_y(main_path, output_labels, opt.data, int(opt.k))
+        draw_triangle(triangle_labels_x, "data_x", "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/triangle_{}_k={}_id={}_data_x.png".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count))
+        draw_triangle(triangle_labels_y, "data_y", "saves/data={}_alpha={}_beta={}_h_dim={}_main_epoch={}/{}/triangle_{}_k={}_id={}_data_y.png".format(opt.data, float(opt.alpha), float(opt.beta), int(opt.h_dim), int(opt.main_epoch), times_count, opt.data, int(opt.k), times_count))
+        print("Triangle built (5/6)")
 
     # print("heat_map_data_inter in train:")
     # print(heat_map_data_inter)
@@ -370,8 +376,8 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
     save_log_dic["time_end"] = get_now_string()
     save_log_dic["time_cost"] = (time.time() - save_log_dic_t0) / 60.0
 
-    with open("record/record_log.csv", "w") as f:
-        f.write("{0},{1},{2},{3},{4},{5:.9f},{6},{7},{8},{9:.12f},{10:.12f},{11:.12f},{12:.12f},{13:.12f},{14:.12f},{15:.12f},{16:.12f},{17:.12f},{18:.12f}\n".format(
+    with open("record/record_log.csv", "a") as f:
+        f.write("{0},{1},{2},{3},{4},{5:.9f},{6},{7},{8},{9:.12f},{10:.12f},{11:.12f},{12:.12f},{13:.12f},{14:.12f},{15:.12f},{16:.12f},{17:.12f},{18:.12f},{19:.12f}\n".format(
             save_log_dic["time_string"],  # 0
             save_log_dic["time_start"],  # 1
             save_log_dic["time_end"],  # 2
@@ -383,14 +389,15 @@ def train(main_path, opt, data_x, times_count, parameters, base_dic, base_res, b
             save_log_dic["keep_prob"],  # 8
             save_log_dic["network_avg_loss"],  # 9
             save_log_dic["network_avg_val_loss"],  # 10
-            save_log_dic["avg_loss_c_L1"],  # 11
-            save_log_dic["avg_loss_a_L1"],  # 12
-            save_log_dic["avg_loss_a_L2"],  # 13
-            save_log_dic["avg_loss_e_L1"],  # 14
-            save_log_dic["avg_loss_e_L3"],  # 15
-            save_log_dic["va_avg_loss_L1"],  # 16
-            save_log_dic["va_avg_loss_L2"],  # 17
-            save_log_dic["va_avg_loss_L3"],  # 18
+            save_log_dic["embedding_avg_loss_s"],  # 11
+            save_log_dic["avg_loss_c_L1"],  # 12
+            save_log_dic["avg_loss_a_L1"],  # 13
+            save_log_dic["avg_loss_a_L2"],  # 14
+            save_log_dic["avg_loss_e_L1"],  # 15
+            save_log_dic["avg_loss_e_L3"],  # 16
+            save_log_dic["va_avg_loss_L1"],  # 17
+            save_log_dic["va_avg_loss_L2"],  # 18
+            save_log_dic["va_avg_loss_L3"],  # 19
         ))
 
     return judge, judge_params, distribution_string
@@ -426,7 +433,7 @@ if __name__ == "__main__":
     parser.add_argument("--kmeans", default=0, help="time of doing kmeans as base before training")
     parser.add_argument("--k", default=6, help="number of clusters needed")
     parser.add_argument("--clear", default=1, help="whether to clear the proposed file")
-    parser.add_argument("--main_epoch", default=1000, help="iteration in main algorithm")
+    parser.add_argument("--main_epoch", default=5000, help="iteration in main algorithm")
     parser.add_argument("--alpha", default=0.00001, help="alpha parameter in model (not dataset names)")
     parser.add_argument("--beta", default=0.1, help="beta parameter in model (not dataset names)")
     parser.add_argument("--h_dim", default=8, help="h_dim_FC & h_dim_RNN")
@@ -444,7 +451,7 @@ if __name__ == "__main__":
         'lr_rate': 0.0001,            # 0.0001
         'keep_prob_s3': 0.5,          # 0.5
         'mb_size_s3': 32,             # 32
-        'iteration_s3': 1000,         # 3750
+        'iteration_s3': 3750,#1000,         # 3750
         'check_step_s3': 100,         # 250
         # [Step 4] Train temporal phenotyping
         'alpha': float(opt.alpha),    # 0.00001
