@@ -169,7 +169,7 @@ def draw_heat_map_2(data1, data2, save_path, s=2, show_flag=False):
             plt.show()
 
 
-def draw_heat_map_3(data1, data2, data3, save_path, s=2, show_flag=False, filter_cols=7):
+def draw_heat_map_3(data1, data2, data3, save_path, s=2, show_flag=False, filter_cols=7, save_flag=True):
     pic_keys = ["var", "avg"]
     color_dic = {
         "var": plt.cm.hot,
@@ -256,7 +256,8 @@ def draw_heat_map_3(data1, data2, data3, save_path, s=2, show_flag=False, filter
         cb.set_label("Intra-cluster {}".format(label_dic[one_key]), fontdict={"rotation": 270})
 
         plt.tight_layout()
-        plt.savefig("{}_{}.png".format(save_path, one_key), dpi=300)
+        if save_flag:
+            plt.savefig("{}_{}.png".format(save_path, one_key), dpi=300)
         if show_flag:
             plt.show()
 
@@ -690,7 +691,7 @@ def one_time_draw_tsne():
     # print([len(item) for item in data_plot])
     color_types = ["red", "cyan", "blue", "green", "orange", "yellow", "magenta"]
     for i, point in enumerate(data):
-        plt.scatter(point[0], point[1], s=5, c=color_types[colors[i]])
+        plt.4r53scatter(point[0], point[1], s=5, c=color_types[colors[i]])
     plt.show()
 
 
